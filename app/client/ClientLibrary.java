@@ -10,7 +10,7 @@ public interface ClientLibrary {
      * @param key - chave
      * @param value - informação que se quer guardar
      */
-    public void put(String key,byte[] value);
+    public void put(String key, byte[] value);
 
     /**
      * Operação de leitura, para uma chave key, devolver o respetivo valor, ou null caso a chave não exista.
@@ -40,5 +40,5 @@ public interface ClientLibrary {
      * @param valueCond - value de comparacao
      * @return - value correspondente a key
      */
-    public byte[] getWhen(String key,String keyCond, byte[] valueCond);
+    public byte[] getWhen(String key, String keyCond, byte[] valueCond);
 }
