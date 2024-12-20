@@ -8,22 +8,35 @@ public class Client {
     private String name;
     private String password;
 
+    /**
+     * Cria um novo cliente
+     * @param name - nome do user
+     * @param password - pass do user
+     */
     public Client(String name, String password) {
         this.name = name;
         this.password = password;
     }
 
+    /**
+     * devolve o nome do user
+     * @return
+     */
     public String getName() { 
         return name; 
     }
 
+    /**
+     * devolve a pass do user
+     * @return
+     */
     public String getPassword() { 
         return password; 
     }
 
     /**
      * Writes the bytes from a client credentials to the DataOutputStream passed as an argument
-     * @param out
+     * @param out - DataOutputStream
      * @throws IOException
      */
     public void serialize(DataOutputStream out) throws IOException {
@@ -32,6 +45,12 @@ public class Client {
         //flush fora para mais controlo
     }
 
+    /**
+     * Reads the bytes from a client credentials from the DataInputStream passed as an argument
+     * @param in - DataInputStream
+     * @return - Return dos bytes lidos
+     * @throws IOException
+     */
     public static Client deserialize(DataInputStream in) throws IOException { 
         String name;
         name = in.readUTF();
@@ -41,7 +60,7 @@ public class Client {
 
         return new Client(name, password);
     }
-
+    
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
