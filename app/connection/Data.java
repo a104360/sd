@@ -3,6 +3,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.*;
 
+
 public class Data {
     private final Map<String, byte[]> store = new HashMap<>();
     private final ReentrantLock lock = new ReentrantLock(); 
