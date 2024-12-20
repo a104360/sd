@@ -1,3 +1,4 @@
+package server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -5,6 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
+import client.Client;
+import client.ClientList;
+import connection.Data;
+import connection.FramedConnection;
 
 class PasswordManager {
     private HashMap<String, ArrayList<Client>> clients = new HashMap<>();

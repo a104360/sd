@@ -1,10 +1,11 @@
+package client;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
-class ClientList extends ArrayList<Client> {
+public class ClientList extends ArrayList<Client> {
     private ReentrantLock lock = new ReentrantLock();
 
     public void serialize(DataOutputStream out) throws IOException { 

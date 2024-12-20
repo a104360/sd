@@ -1,8 +1,10 @@
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+
+import client.Client;
+import connection.FramedConnection;
 
 public class User {
 
@@ -67,6 +69,7 @@ public class User {
                     case 3:
                         System.out.println("Exiting...");
                         running = false;
+                        c.close();
                         break;
 
                     default:

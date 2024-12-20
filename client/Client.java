@@ -1,9 +1,10 @@
+package client;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 
-class Client {
+public class Client {
     private String name;
     private String password;
 
