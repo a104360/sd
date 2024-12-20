@@ -2,6 +2,8 @@ all: compile
 
 compile: 
 	javac ./*/*.java
+	javac ./*.java
 
 clean:
-	rm ./*/*.class
+	rm -f ./*/*.class
+	rm -f ./*.class
