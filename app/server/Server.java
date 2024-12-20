@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Lock;
 
 import client.Client;
 import client.ClientList;
@@ -121,6 +122,7 @@ class PasswordManager {
 
 class ServerWorker implements Runnable {
     private Socket socket;
+    private Server server;
     private PasswordManager manager;
     private int maxSessions;
     private int activeSessions;
@@ -129,7 +131,8 @@ class ServerWorker implements Runnable {
     private Condition canConnect = lock.newCondition();
     private Data store;
 
-    public ServerWorker(Socket socket, PasswordManager manager, int maxSessions, FramedConnection con, int activeSessions, Data dataStore) {
+    public ServerWorker(Server server,Socket socket, PasswordManager manager, int maxSessions, FramedConnection con, int activeSessions, Data dataStore) {
+        this.server = server;
         this.socket = socket;
         this.manager = manager;
         this.maxSessions = maxSessions;
@@ -139,17 +142,17 @@ class ServerWorker implements Runnable {
     }
 
     @Override
-    /*mudificar para o que se quer */
+    /*modificar para o que se quer */
     public void run() {
         try{
             // Controle de número de sessões com ReentrantLock
             lock.lock();
             try {
-                while (activeSessions >= maxSessions) {
+                while (server.activeSessions >= maxSessions) {
                     canConnect.await();  // Aguarda até que haja espaço para mais conexões
                 }
-                activeSessions++; // Incrementa o contador de sessões ativas
-                System.out.println("Client connected. Active sessions: " + activeSessions);
+                server.activeSessions++; // Incrementa o contador de sessões ativas
+                System.out.println("Client connected. Active sessions: " + server.activeSessions);
             } finally {
                 lock.unlock();
             }
@@ -182,7 +185,7 @@ class ServerWorker implements Runnable {
                 }
             }
             */
-
+            
             socket.shutdownInput();
             socket.shutdownOutput();
             socket.close();
@@ -192,9 +195,9 @@ class ServerWorker implements Runnable {
             // Após o cliente selecionar "exit", decrementa o contador de sessões ativas
             lock.lock();
             try {
-                activeSessions--; // Decrementa o contador de sessões ativas
-                System.out.println("Client disconnected. Active sessions: " + activeSessions);
-                canConnect.signalAll();  // Notifica outras threads esperando para se conectar
+                server.activeSessions--; // Decrementa o contador de sessões ativas
+                System.out.println("Client disconnected. Active sessions: " + server.activeSessions);
+                server.serverCondition.signalAll();  // Notifica outras threads esperando para se conectar
             } finally {
                 lock.unlock();
             }
@@ -205,25 +208,48 @@ class ServerWorker implements Runnable {
 
 
 public class Server {
+    Lock serverLock = new ReentrantLock();
+    Condition serverCondition = serverLock.newCondition();
+    int port;
+    int maxSessions;
+    int activeSessions;
+    ServerSocket serverSocket;
+    PasswordManager manager;
+    Data dataStore;
+    
+    public Server() throws IOException{
+        this.port = 12345;
+        this.maxSessions = 3;
+        this.activeSessions = 0;
+        this.serverSocket = new ServerSocket(port);
+        this.manager = new PasswordManager();
+        this.dataStore = new Data();
+    }
 
-    public static void main (String[] args) throws IOException {
-        int port = 12345;
-        int maxSessions = 3;
-        int activeSessions = 0;
-        ServerSocket serverSocket = new ServerSocket(port);
-        System.out.println("Server started on port " + port);
-        PasswordManager manager = new PasswordManager();
-        Data DataStore = new Data();
+    public static void main (String[] args) throws IOException, InterruptedException{
+        Server s = new Server();
 
         // example pre-population
-        manager.newUser(new Client("John", "john@mail.com"));
-        manager.newUser(new Client("Alice", "CompanyInc."));
-        manager.newUser(new Client("Bob", "bob.work@mail.com"));
+        s.manager.newUser(new Client("John", "john@mail.com"));
+        s.manager.newUser(new Client("Alice", "CompanyInc."));
+        s.manager.newUser(new Client("Bob", "bob.work@mail.com"));
 
         while (true) {
-            Socket socket = serverSocket.accept();
+            Socket socket = s.serverSocket.accept();
+            s.serverLock.lock();
+            try{
+                if(s.activeSessions < s.maxSessions){
+                    s.activeSessions++;
+                } else {
+                    while(s.activeSessions >= s.maxSessions){
+                        s.serverCondition.await();
+                    }
+                }
+            } finally {
+                s.serverLock.unlock();
+            }
             FramedConnection c = new FramedConnection(socket);
-            Thread worker = new Thread(new ServerWorker(socket, manager,maxSessions,c,activeSessions,DataStore));
+            Thread worker = new Thread(new ServerWorker(s,socket, s.manager,s.maxSessions,c,s.activeSessions,s.dataStore));
             worker.start();
         }
     }
