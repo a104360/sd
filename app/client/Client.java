@@ -60,7 +60,8 @@ public class Client {
             return false;
         }
         Client other = (Client) obj;
-        return Objects.equals(name, other.getName()) && Objects.equals(password, other.getPassword());
+        return this.hashCode() == other.hashCode();
+        //return Objects.equals(name, other.getName()) && Objects.equals(password, other.getPassword());
     }
 
     @Override

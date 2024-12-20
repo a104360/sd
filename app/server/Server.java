@@ -4,6 +4,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -13,7 +14,14 @@ import connection.Data;
 import connection.FramedConnection;
 
 class PasswordManager {
-    private HashMap<String, ArrayList<Client>> clients = new HashMap<>();
+    /**
+     * Estrutura para guardar o nome do Cliente a sua password
+     * @apiNote Varios clientes podem ter a mesma password
+     */
+    private Map<String, ArrayList<Client>> clients = new HashMap<>();
+    /**
+     * Lock para bloquear o PassowordManager
+     */
     private ReentrantLock lock = new ReentrantLock();
 
     //Função pra ver se as credenciais existem
@@ -23,7 +31,10 @@ class PasswordManager {
 
 
     //Funcao pra registar credenciais novas
-
+    /**
+     * Inserir novos utilizadores no mapa de clientes
+     * @param c - Cliente a inserir
+     */
     public void newUser(Client c){
         lock.lock();
         try{
@@ -40,6 +51,11 @@ class PasswordManager {
         }
     }
 
+    /**
+     * Confirmar se o utilizador está registado no sistema
+     * @param c - cliente a verificar
+     * @return 
+     */
     public boolean confirmUser(Client c){
         lock.lock();
         try{
@@ -57,6 +73,12 @@ class PasswordManager {
         }
     }
 
+    /**
+     * Atualizar a password do cliente, se a password antiga estiver correta
+     * @param password - password atual do cliente 
+     * @param c - Instancia do cliente a atualizar
+     * @return
+     */
     public int updateUser(String password, Client c){
         lock.lock();
         try{
