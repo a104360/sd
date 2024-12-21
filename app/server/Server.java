@@ -103,7 +103,9 @@ class PasswordManager {
         }
     }
 
-    /*passar do map de listas para 1 clientLista*/
+    /**
+     * Obter um objeto ClientList do Map de Password
+     */
     public ClientList getClients() {
         ClientList clientList = new ClientList();
 
@@ -117,6 +119,10 @@ class PasswordManager {
         } finally {
             lock.unlock();
         }
+    }
+
+    public void dump(){
+        System.out.println(this.toString());
     }
 }
 
@@ -145,19 +151,6 @@ class ServerWorker implements Runnable {
     /*modificar para o que se quer */
     public void run() {
         try{
-            /*// Controle de número de sessões com ReentrantLock
-            lock.lock();
-            try {
-                while (server.activeSessions >= maxSessions) {
-                    canConnect.await();  // Aguarda até que haja espaço para mais conexões
-                }
-                server.activeSessions++; // Incrementa o contador de sessões ativas
-                System.out.println("Client connected. Active sessions: " + server.activeSessions);
-            } finally {
-                lock.unlock();
-            }*/
-
-
             String username = new String(c.receive());
             String password = new String(c.receive());
             System.out.println(username + " " +password);
@@ -193,13 +186,13 @@ class ServerWorker implements Runnable {
             System.err.println("Error handling client: " + e.getMessage());
         } finally {
             // Após o cliente selecionar "exit", decrementa o contador de sessões ativas
-            lock.lock();
+            server.serverLock.lock();
             try {
                 server.activeSessions--; // Decrementa o contador de sessões ativas
                 System.out.println("Client disconnected. Active sessions: " + server.activeSessions);
                 server.serverCondition.signalAll();  // Notifica outras threads esperando para se conectar
             } finally {
-                lock.unlock();
+                server.serverLock.unlock();
             }
         }
     }

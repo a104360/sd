@@ -21,6 +21,12 @@ public class FramedConnection implements AutoCloseable{
         this.output = new DataOutputStream(new BufferedOutputStream(this.sock.getOutputStream()));
     }
 
+    public FramedConnection() throws IOException {
+        this.sock = new Socket("localhost",12345);
+        this.input = new DataInputStream(new BufferedInputStream(this.sock.getInputStream()));
+        this.output = new DataOutputStream(new BufferedOutputStream(this.sock.getOutputStream()));
+    }
+
     public void send(byte[] data) throws IOException { 
         this.outputLock.lock();
         try{
