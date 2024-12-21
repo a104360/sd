@@ -97,7 +97,7 @@ public class Client {
         FramedConnection c = new FramedConnection();
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         
-
+        boolean auth = false;
         boolean valid = true;
             while (valid) {
                 System.out.println("\n--- Autentification Menu ---");
@@ -110,25 +110,41 @@ public class Client {
                 int passOption = Integer.parseInt(passChoice);
 
                 switch (passOption) {
-                    case 1:
+                    case 1: // register
+                        c.send(FramedConnection.REGISTER.getBytes());
                         System.out.print("Enter key: ");
                         String key = in.readLine();
                         System.out.print("Enter value: ");
                         String value = in.readLine();
-                        //data.put(key, value.getBytes());
+                        c.send(key.getBytes());
+                        c.send(value.getBytes());
+                        System.out.println(new String(c.receive()));
+                        auth = true;
                         break;
 
-                    case 2:
+                    case 2: // Login 
+                        c.send(FramedConnection.LOGIN.getBytes());
                         System.out.print("Enter key: ");
                         key = in.readLine();
-                        byte[] result = "null".getBytes();
+                        System.out.print("Enter Value: ");
+                        value = in.readLine();
+                        c.send(key.getBytes());
+                        c.send(value.getBytes());
+                        String replyLogin = new String(c.receive());
+                        System.out.println(replyLogin);
+                        if(replyLogin.compareTo(FramedConnection.SUCCESS) == 0){
+                            auth = true;
+                            break;
+                        }
+                        /*byte[] result = "null".getBytes();
                         // result = data.get(key);
                         if (result != null) {
                             System.out.println("Value: " + new String(result));
-                        }
+                        }*/
                         break;
                     
-                    case 3:
+                    case 3: // Change Password
+                        c.send(FramedConnection.CHANGEPASSWORD.getBytes());
                         boolean updatePassword = true;
                         int tries = 0;
                         while (updatePassword) {
@@ -176,14 +192,19 @@ public class Client {
                     case 4:
                         System.out.println("Exiting...");
                         valid = false;
-                        //c.close();
+                        if(!auth){
+                            c.close();
+                            in.close();
+                            return;
+                        } 
+                        c.send(FramedConnection.NEXTSTEP.getBytes());
                         break;
 
                     default:
                         System.out.println("Invalid choice.");
                 }
             }
-
+        System.out.println(new String(c.receive()));
         boolean running = true;
             while (running) {
                 System.out.println("\n--- Main Menu ---");

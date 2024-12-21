@@ -25,13 +25,7 @@ class PasswordManager {
      */
     private ReentrantLock lock = new ReentrantLock();
 
-    //Função pra ver se as credenciais existem
 
-
-    //Funcao pra mudar a password 
-
-
-    //Funcao pra registar credenciais novas
     /**
      * Inserir novos utilizadores no mapa de clientes
      * @param c - Cliente a inserir
@@ -78,25 +72,25 @@ class PasswordManager {
      * Atualizar a password do cliente, se a password antiga estiver correta
      * @param password - password atual do cliente 
      * @param c - Instancia do cliente a atualizar
-     * @return
+     * @return 
+     * 0 - sucesso \\
+     * 1 - password incorreta \\ 
+     * 2 - password ou username incorreto
      */
     public int updateUser(String password, Client c){
         lock.lock();
         try{
-            int canUpdate = 0;
             if(clients.get(password) == null) {
-                return 1; // a pass nem esta errada 
+                return 1;
             } else {
                 ArrayList<Client> clientList = clients.get(password);
                 for(Client next : clientList) {
-                    if(c.getName().equals(c.getName())) {
-                        canUpdate = 1;
-                        break;
+                    if(next.getName().equals(c.getName())) {
+                        newUser(c);
+                        return 0;
                     }
                 } 
-                if(canUpdate == 0) return 2; //a pass existe mas o nome não, logo o homem e cego e não sabe o nome, e cego e errou a pass, ou os 2
-                newUser(c);
-                return 0; //mudou bem a pass
+                return 2; 
             }
         } finally {
             lock.unlock();
@@ -120,14 +114,9 @@ class PasswordManager {
             lock.unlock();
         }
     }
-
-    public void dump(){
-        System.out.println(this.toString());
-    }
 }
 
 class ServerWorker implements Runnable {
-    private Socket socket;
     private Server server;
     private PasswordManager manager;
     private int maxSessions;
@@ -137,9 +126,8 @@ class ServerWorker implements Runnable {
     private Condition canConnect = lock.newCondition();
     private Data store;
 
-    public ServerWorker(Server server,Socket socket, PasswordManager manager, int maxSessions, FramedConnection con, int activeSessions, Data dataStore) {
+    public ServerWorker(Server server, PasswordManager manager, int maxSessions, FramedConnection con, int activeSessions, Data dataStore) {
         this.server = server;
-        this.socket = socket;
         this.manager = manager;
         this.maxSessions = maxSessions;
         this.c = con;
@@ -147,41 +135,103 @@ class ServerWorker implements Runnable {
         this.store = dataStore;
     }
 
+    private Client getCredentials() throws IOException{
+        String username = new String(this.c.receive());
+        String password = new String(this.c.receive());
+        System.out.println(username + " " +password);
+        
+        return new Client(username,password);
+    }
+
     @Override
-    /*modificar para o que se quer */
+    /**
+     * Funcao que implementa o comportamento para atender clientes
+     */
     public void run() {
         try{
-            String username = new String(c.receive());
-            String password = new String(c.receive());
-            System.out.println(username + " " +password);
-            
-            Client newUser = new Client(username,password);
-            // adicionar user novo
-            
-            String welcome = "Welcome! You are connected to the server.";
-            //System.out.println(welcome.getBytes().length);
+            // Receber o request
+            String request = new String(c.receive());
+            Client validUser = null; // Indica se o utilizador e valido
+            boolean nextStep = false; // Indica se podemos receber os pedidos de operaçoes
+            // Iterar este ciclo enquanto 
+            //o utilizador for invalido ou nao podermos passar para a rececao de operações 
+            while (validUser == null || !nextStep) {
+                System.out.println("-----------------");
+                //System.out.println(validUser);
+                //System.out.println(nextStep);
+                switch (request) {
+                    case FramedConnection.REGISTER:
+                        System.out.println("REG");
+                        Client c = getCredentials();
+                        this.manager.newUser(c);
+                        this.c.send("LOGGED IN".getBytes());
+                        validUser = c;
+                        request = new String(this.c.receive());
+                        System.out.println("RECEBEU PROXIMO");
+                        break;
+                    case FramedConnection.LOGIN:
+                        System.out.println("LOG");
+                        Client aux = getCredentials();
+                        if(!this.manager.confirmUser(aux)){
+                            this.c.send("Credenciais invalidas".getBytes());
+                            request = new String(this.c.receive());
+                            break;
+                        }
+                        validUser = aux;
+                        this.c.send(FramedConnection.SUCCESS.getBytes());
+                        request = new String(this.c.receive());
+                        break;
+                    case FramedConnection.CHANGEPASSWORD:
+                        System.out.println("CGP");
+                        if(validUser == null) break;
+                        Client received = getCredentials();
+                        int reply = this.manager.updateUser(received.getPassword(),validUser);
+                        this.c.send((Integer.toString(reply)).getBytes());
+                        request = new String(this.c.receive());
+                        break;
+                    case FramedConnection.NEXTSTEP:
+                        System.out.println("RECEBEU O NEXTSTEP");
+                        nextStep = true;
+                        if(validUser == null){
+                            this.c.close();
+                            return;
+                        }
+                        break;
+                    default:
+                        this.c.send("Request invalido".getBytes());
+                        break;
+                }          
+            }
+            System.out.println("SAIU DO CICLO");
+            String welcome = "Please select the next operations.";
             c.send(welcome.getBytes());
 
-            //boolean clientExited = false;
-            while (socket.isConnected()) {
+            while (true) {
                 // Logica para tratar pedidos
-            }
-
-            /* 
-            boolean open = true;
-            while(open){
-                Client c = Client.deserialize(in);
-                if(c == null){
-                    open = false;
-                }else{
-                    manager.update(c);
+                try{
+                    String text = new String(c.receive());
+                    switch (text) {
+                        case FramedConnection.GET:
+                            break;
+                        case FramedConnection.PUT:
+                            break;
+                        case FramedConnection.MULTIGET:
+                            break;
+                        case FramedConnection.MULTIPUT:
+                            break;
+                        case FramedConnection.GETWHEN:
+                            break;
+                        default:
+                            break;
+                    }
+                } catch (IOException e){
+                    break;
                 }
+                // Login / Registo
+                // Ciclo para tratar pedidos
             }
-            */
             
-            socket.shutdownInput();
-            socket.shutdownOutput();
-            socket.close();
+            c.close();
         }catch (IOException e){//| InterruptedException e){
             System.err.println("Error handling client: " + e.getMessage());
         } finally {
@@ -249,7 +299,7 @@ public class Server {
             }
             s.getConnections();
             FramedConnection c = new FramedConnection(socket);
-            Thread worker = new Thread(new ServerWorker(s,socket, s.manager,s.maxSessions,c,s.activeSessions,s.dataStore));
+            Thread worker = new Thread(new ServerWorker(s, s.manager,s.maxSessions,c,s.activeSessions,s.dataStore));
             worker.start();
         }
     }

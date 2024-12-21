@@ -14,6 +14,17 @@ public class FramedConnection implements AutoCloseable{
     private DataOutputStream output;
     private ReentrantLock outputLock = new ReentrantLock();
     private ReentrantLock inputLock = new ReentrantLock();
+    public static final String REGISTER = "R\0";
+    public static final String LOGIN = "L\0";
+    public static final String CHANGEPASSWORD = "CP";
+    public static final String NEXTSTEP = "N\0";
+    public static final String PUT = "P\0";
+    public static final String GET = "G\0";
+    public static final String MULTIPUT = "MP";
+    public static final String MULTIGET = "MG";
+    public static final String GETWHEN = "GH";
+    public static final String SUCCESS = "200"; 
+
 
     public FramedConnection(Socket Socket) throws IOException {
         this.sock = Socket;
@@ -54,5 +65,9 @@ public class FramedConnection implements AutoCloseable{
 
     public void close() throws IOException {
         this.sock.close();
+    }
+
+    public boolean isConnected(){
+        return this.sock.isConnected();
     }
 }
