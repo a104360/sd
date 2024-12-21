@@ -8,6 +8,11 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ClientList extends ArrayList<Client> {
     private ReentrantLock lock = new ReentrantLock();
 
+    /**
+     * Writes the bytes from a client credentials to the DataOutputStream passed as an argument
+     * @param out - DataOutputStream
+     * @throws IOException
+     */
     public void serialize(DataOutputStream out) throws IOException { 
         lock.lock();
         
@@ -23,6 +28,12 @@ public class ClientList extends ArrayList<Client> {
         }
     }
 
+    /**
+     * Reads the bytes from a client credentials from the DataInputStream passed as an argument
+     * @param in - DataInputStream
+     * @return - Return dos bytes lidos
+     * @throws IOException
+     */
     public static ClientList deserialize(DataInputStream in) throws IOException { 
         ClientList clientList = new ClientList();
         
