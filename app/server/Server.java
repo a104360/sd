@@ -145,7 +145,7 @@ class ServerWorker implements Runnable {
     /*modificar para o que se quer */
     public void run() {
         try{
-            // Controle de número de sessões com ReentrantLock
+            /*// Controle de número de sessões com ReentrantLock
             lock.lock();
             try {
                 while (server.activeSessions >= maxSessions) {
@@ -155,7 +155,7 @@ class ServerWorker implements Runnable {
                 System.out.println("Client connected. Active sessions: " + server.activeSessions);
             } finally {
                 lock.unlock();
-            }
+            }*/
 
 
             String username = new String(c.receive());
@@ -169,9 +169,9 @@ class ServerWorker implements Runnable {
             //System.out.println(welcome.getBytes().length);
             c.send(welcome.getBytes());
 
-            boolean clientExited = false;
-            while (!clientExited) {
-                
+            //boolean clientExited = false;
+            while (socket.isConnected()) {
+                // Logica para tratar pedidos
             }
 
             /* 
@@ -189,7 +189,7 @@ class ServerWorker implements Runnable {
             socket.shutdownInput();
             socket.shutdownOutput();
             socket.close();
-        }catch (IOException | InterruptedException e){
+        }catch (IOException e){//| InterruptedException e){
             System.err.println("Error handling client: " + e.getMessage());
         } finally {
             // Após o cliente selecionar "exit", decrementa o contador de sessões ativas
@@ -225,6 +225,10 @@ public class Server {
         this.manager = new PasswordManager();
         this.dataStore = new Data();
     }
+    
+    public void getConnections(){
+        System.out.println("Active Connections: " + this.activeSessions + "\nMaxConnections : " + this.maxSessions);
+    }
 
     public static void main (String[] args) throws IOException, InterruptedException{
         Server s = new Server();
@@ -233,6 +237,8 @@ public class Server {
         s.manager.newUser(new Client("John", "john@mail.com"));
         s.manager.newUser(new Client("Alice", "CompanyInc."));
         s.manager.newUser(new Client("Bob", "bob.work@mail.com"));
+
+        s.getConnections();
 
         while (true) {
             Socket socket = s.serverSocket.accept();
@@ -248,6 +254,7 @@ public class Server {
             } finally {
                 s.serverLock.unlock();
             }
+            s.getConnections();
             FramedConnection c = new FramedConnection(socket);
             Thread worker = new Thread(new ServerWorker(s,socket, s.manager,s.maxSessions,c,s.activeSessions,s.dataStore));
             worker.start();
