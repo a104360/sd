@@ -199,7 +199,12 @@ class ServerWorker implements Runnable {
                         break;
                     case FramedConnection.CHANGEPASSWORD:
                         System.out.println("CGP");
-                        if(validUser == null) break;
+                        if(validUser == null){
+                            this.c.send("LOGIN NECESSARY".getBytes());
+                            request = new String(this.c.receive());
+                            break;
+                        }
+                        this.c.send("CONTINUE".getBytes());
                         int reply = 1;
                         for(int i = 0; i < 3;i++){
                             String user = new String(this.c.receive());
@@ -234,21 +239,40 @@ class ServerWorker implements Runnable {
             
             while (true) {
                 // Logica para tratar pedidos
-                this.server.debug();
                 try{
                     String text = new String(c.receive());
                     switch (text) {
                         case FramedConnection.GET:
+                            this.server.debug();
+                            System.out.println("RECEIVED " + FramedConnection.GET);
+                            //String key = new String(this.c.receive());
+                            //byte[] value = this.store.get(key);
+                            //if(value != null){
+                            //    this.c.send(value);
+                            //    break;
+                            //}
+                            //this.c.send("null".getBytes());
                             break;
                         case FramedConnection.PUT:
+                            this.server.debug();
+                            System.out.println("RECEIVED " + FramedConnection.PUT);
+                            //key = new String(this.c.receive());
+                            //value = this.c.receive();
                             break;
                         case FramedConnection.MULTIGET:
+                            this.server.debug();
+                            System.out.println("RECEIVED " + FramedConnection.MULTIGET);
                             break;
                         case FramedConnection.MULTIPUT:
+                            this.server.debug();
+                            System.out.println("RECEIVED " + FramedConnection.MULTIPUT);
                             break;
                         case FramedConnection.GETWHEN:
+                            this.server.debug();
+                            System.out.println("RECEIVED " + FramedConnection.GETWHEN);
                             break;
                         default:
+                            System.out.println("ALGO CORREU MAL");
                             return;
                     }
                 } catch (IOException e){

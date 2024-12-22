@@ -5,8 +5,12 @@ import java.util.concurrent.locks.*;
 
 
 public class Data {
-    private final Map<String, byte[]> store = new HashMap<>();
-    private final ReentrantLock lock = new ReentrantLock(); 
+    private Map<String, byte[]> store;// = new HashMap<>();
+    private ReentrantLock lock = new ReentrantLock(); 
+
+    public Data(){
+        this.store = new HashMap<>();
+    }
 
     public void put(String key, byte[] value) {
         lock.lock();
