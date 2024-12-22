@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Lock;
+import java.lang.ProcessBuilder;
 
 import client.Client;
 import client.ClientList;
@@ -114,6 +115,18 @@ class PasswordManager {
             lock.unlock();
         }
     }
+    @Override
+    public String toString(){
+        String text = new String();
+        for(String password : this.clients.keySet()){
+            text += password + ":";
+            for(Client c : this.clients.get(password)){
+                text += c.toString() + "\n\t";
+            }
+            text += "\n";
+        }
+        return text;
+    }
 }
 
 class ServerWorker implements Runnable {
@@ -156,7 +169,8 @@ class ServerWorker implements Runnable {
             // Iterar este ciclo enquanto 
             //o utilizador for invalido ou nao podermos passar para a rececao de operações 
             while (validUser == null || !nextStep) {
-                System.out.println("-----------------");
+                //System.out.println("-----------------");
+                this.server.debug();
                 //System.out.println(validUser);
                 //System.out.println(nextStep);
                 switch (request) {
@@ -166,6 +180,7 @@ class ServerWorker implements Runnable {
                         this.manager.newUser(c);
                         this.c.send("LOGGED IN".getBytes());
                         validUser = c;
+                        this.server.debug();
                         request = new String(this.c.receive());
                         System.out.println("RECEBEU PROXIMO");
                         break;
@@ -178,6 +193,7 @@ class ServerWorker implements Runnable {
                             break;
                         }
                         validUser = aux;
+                        this.server.debug();
                         this.c.send(FramedConnection.SUCCESS.getBytes());
                         request = new String(this.c.receive());
                         break;
@@ -206,6 +222,8 @@ class ServerWorker implements Runnable {
             String welcome = "Please select the next operations.";
             c.send(welcome.getBytes());
 
+            this.server.debug();
+
             while (true) {
                 // Logica para tratar pedidos
                 try{
@@ -222,7 +240,7 @@ class ServerWorker implements Runnable {
                         case FramedConnection.GETWHEN:
                             break;
                         default:
-                            break;
+                            return;
                     }
                 } catch (IOException e){
                     break;
@@ -281,7 +299,7 @@ public class Server {
         s.manager.newUser(new Client("Alice", "CompanyInc."));
         s.manager.newUser(new Client("Bob", "bob.work@mail.com"));
 
-        s.getConnections();
+        s.debug();
 
         while (true) {
             Socket socket = s.serverSocket.accept();
@@ -297,11 +315,22 @@ public class Server {
             } finally {
                 s.serverLock.unlock();
             }
-            s.getConnections();
+            s.debug();
             FramedConnection c = new FramedConnection(socket);
             Thread worker = new Thread(new ServerWorker(s, s.manager,s.maxSessions,c,s.activeSessions,s.dataStore));
             worker.start();
         }
     }
 
+    public void debug() throws IOException{
+        Process processBuilder = new ProcessBuilder("clear").inheritIO().start();
+        System.out.println("----------------------");
+        System.out.println("Active sessions : ".toUpperCase() + this.activeSessions);
+        System.out.println("Max sessions allowed : ".toUpperCase() + this.maxSessions);
+        System.out.println("----------------------");
+        System.out.println("MANAGER");
+        System.out.println("----------------------");
+        System.out.println(this.manager.toString());
+        System.out.println("----------------------");
+    }
 }
