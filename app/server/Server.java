@@ -132,19 +132,13 @@ class PasswordManager {
 class ServerWorker implements Runnable {
     private Server server;
     private PasswordManager manager;
-    private int maxSessions;
-    private int activeSessions;
     private FramedConnection c;
-    private ReentrantLock lock = new ReentrantLock();
-    private Condition canConnect = lock.newCondition();
     private Data store;
 
     public ServerWorker(Server server, PasswordManager manager, int maxSessions, FramedConnection con, int activeSessions, Data dataStore) {
         this.server = server;
         this.manager = manager;
-        this.maxSessions = maxSessions;
         this.c = con;
-        this.activeSessions = activeSessions;
         this.store = dataStore;
     }
 
@@ -273,10 +267,28 @@ class ServerWorker implements Runnable {
                             break;
                         default:
                             System.out.println("ALGO CORREU MAL");
+                            /*this.server.serverLock.lock();
+                            try{
+                                this.server.activeSessions--;
+                                this.server.serverCondition.signalAll();
+                            } finally {
+                                this.server.serverLock.unlock();
+                            }
+                            this.server.debug();
+                            */
                             return;
                     }
                 } catch (IOException e){
+                    System.err.println(e.getMessage());
                     break;
+                    /*this.server.serverLock.lock();
+                    try{
+                        this.server.activeSessions--;
+                        this.server.serverCondition.signalAll();
+                    } finally {
+                        this.server.serverLock.unlock();
+                    }
+                    break;*/
                 }
                 // Login / Registo
                 // Ciclo para tratar pedidos
@@ -284,9 +296,23 @@ class ServerWorker implements Runnable {
             
             c.close();
         }catch(InterruptedException e){
-            System.err.println(e.getMessage());
+            System.err.println("Interruption of bigger try : " + e.getMessage());
+            /*this.server.serverLock.lock();
+            try{
+                this.server.activeSessions--;
+                this.server.serverCondition.signalAll();
+            } finally {
+                this.server.serverLock.unlock();
+            }*/
         }catch (IOException e){//| InterruptedException e){
             System.err.println("Error handling client: " + e.getMessage());
+            /*this.server.serverLock.lock();
+            try{
+                this.server.activeSessions--;
+                this.server.serverCondition.signalAll();
+            } finally {
+                this.server.serverLock.unlock();
+            }*/
         } finally {
             // Após o cliente selecionar "exit", decrementa o contador de sessões ativas
             server.serverLock.lock();
@@ -324,10 +350,6 @@ public class Server {
         this.manager = new PasswordManager();
         this.dataStore = new Data();
     }
-    
-    public void getConnections(){
-        System.out.println("Active Connections: " + this.activeSessions + "\nMaxConnections : " + this.maxSessions);
-    }
 
     public static void main (String[] args) throws IOException, InterruptedException{
         Server s = new Server();
@@ -335,7 +357,10 @@ public class Server {
         // example pre-population
         s.manager.newUser(new Client("John", "john123"));
         s.manager.newUser(new Client("Alice", "CompanyInc."));
-        s.manager.newUser(new Client("Bob", "bob.work@mail.com"));
+        s.manager.newUser(new Client("Bob", "uminho"));
+
+        s.dataStore.put("t", "lorem ipsum".getBytes());
+        s.dataStore.put("teste", "LOREM IPSUM".getBytes());
 
         s.debug();
 
@@ -343,13 +368,10 @@ public class Server {
             Socket socket = s.serverSocket.accept();
             s.serverLock.lock();
             try{
-                if(s.activeSessions < s.maxSessions){
-                    s.activeSessions++;
-                } else {
-                    while(s.activeSessions >= s.maxSessions){
-                        s.serverCondition.await();
-                    }
+                while(s.activeSessions >= s.maxSessions){
+                    s.serverCondition.await();
                 }
+                s.activeSessions++;
             } finally {
                 s.serverLock.unlock();
             }
