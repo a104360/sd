@@ -245,13 +245,13 @@ class ServerWorker implements Runnable {
                         case FramedConnection.GET:
                             this.server.debug();
                             System.out.println("RECEIVED " + FramedConnection.GET);
-                            //String key = new String(this.c.receive());
-                            //byte[] value = this.store.get(key);
-                            //if(value != null){
-                            //    this.c.send(value);
-                            //    break;
-                            //}
-                            //this.c.send("null".getBytes());
+                            String key = new String(this.c.receive());
+                            byte[] value = this.store.get(key);
+                            if(value != null){
+                                this.c.send(value);
+                                break;
+                            }
+                            this.c.send("null".getBytes());
                             break;
                         case FramedConnection.PUT:
                             this.server.debug();

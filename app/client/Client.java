@@ -234,26 +234,26 @@ public class Client {
                 switch (option) {
                     case 1:
                         c.send(FramedConnection.PUT.getBytes());
-                        //System.out.print("Enter key: ");
-                        //String key = in.readLine();
-                        //System.out.print("Enter value: ");
-                        //String value = in.readLine();
-                        //c.send(key.getBytes());
-                        //c.send(value.getBytes());
-                        //System.out.println(new String(c.receive()));
+                        System.out.print("Enter key: ");
+                        String key = in.readLine();
+                        System.out.print("Enter value: ");
+                        String value = in.readLine();
+                        c.send(key.getBytes());
+                        c.send(value.getBytes());
+                        System.out.println(new String(c.receive()));
                         break;
 
                     case 2:
                         c.send(FramedConnection.GET.getBytes());
-                        //System.out.print("Enter key: ");
-                        //key = in.readLine();
-                        //c.send(key.getBytes());
-                        //value = new String(c.receive());
-                        //System.out.println(value);
-                        ///*byte[] result = "null".getBytes();
-                        //if (result != null) {
-                        //    System.out.println("Value: " + new String(result));
-                        //}*/
+                        System.out.print("Enter key: ");
+                        key = in.readLine();
+                        c.send(key.getBytes());
+                        value = new String(c.receive());
+                        System.out.println(value);
+                        /*byte[] result = "null".getBytes();
+                        if (result != null) {
+                            System.out.println("Value: " + new String(result));
+                        }*/
                         break;
                     
                     case 3:
