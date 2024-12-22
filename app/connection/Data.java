@@ -25,4 +25,13 @@ public class Data {
             lock.unlock();
         }
     }
+
+    @Override
+    public String toString(){
+        String text = new String();
+        for(Map.Entry<String,byte[]> key : this.store.entrySet()){
+            System.out.println("KEY : " + key.getKey() + "\nVALUE : " + key.getValue() + "|\n");
+        }
+        return text;
+    }
 }

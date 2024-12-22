@@ -69,9 +69,11 @@ public class Client {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(this.name).append(";");
+        builder.append("Name : ");
+        builder.append(this.name).append("\n");
+        builder.append("Password : ");
         builder.append(this.password);
-        builder.append("}");
+        builder.append("|\n");
         return builder.toString();
     }
 
@@ -161,10 +163,13 @@ public class Client {
                             String username = in.readLine();
                             System.out.print("Password: ");
                             String password = in.readLine();
+                            System.out.print("New password : ");
+                            String nPassword = in.readLine();
                 
                             // Envia os dados para o servidor
                             c.send(username.getBytes());
                             c.send(password.getBytes());
+                            c.send(nPassword.getBytes());
                 
                             // Recebe a resposta do servidor
                             byte[] reply = c.receive();
@@ -185,7 +190,9 @@ public class Client {
                         }
 
                         if(updatePassword == false) {
-                            
+                            //System.out.print("New password : ");
+                            //String nPassword = in.readLine();
+                            //c.send(nPassword.getBytes());
                         }
                         break;
 

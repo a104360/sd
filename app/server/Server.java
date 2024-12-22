@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Condition;
@@ -20,7 +21,7 @@ class PasswordManager {
      * Estrutura para guardar o nome do Cliente a sua password
      * @apiNote Varios clientes podem ter a mesma password
      */
-    private Map<String, ArrayList<Client>> clients = new HashMap<>();
+    private Map<String, List<Client>> clients = new HashMap<>();
     /**
      * Lock para bloquear o PassowordManager
      */
@@ -39,7 +40,7 @@ class PasswordManager {
                 clientList.add(c);
                 clients.put(c.getPassword(), clientList);
             } else {
-                ArrayList<Client> clientList = clients.get(c.getPassword());
+                List<Client> clientList = clients.get(c.getPassword());
                 clients.get(c.getPassword()).add(c);
             }
         } finally {
@@ -58,7 +59,7 @@ class PasswordManager {
             if(clients.get(c.getPassword()) == null) {
                 return false;
             } else {
-                ArrayList<Client> clientList = clients.get(c.getPassword());
+                List<Client> clientList = clients.get(c.getPassword());
                 for(Client next : clientList) {
                     if(c.equals(next)) return true;
                 } 
@@ -72,7 +73,7 @@ class PasswordManager {
     /**
      * Atualizar a password do cliente, se a password antiga estiver correta
      * @param password - password atual do cliente 
-     * @param c - Instancia do cliente a atualizar
+     * @param c - Instancia do cliente a atualizar com a nova palavra pass
      * @return 
      * 0 - sucesso \\
      * 1 - password incorreta \\ 
@@ -84,9 +85,10 @@ class PasswordManager {
             if(clients.get(password) == null) {
                 return 1;
             } else {
-                ArrayList<Client> clientList = clients.get(password);
+                List<Client> clientList = clients.get(password);
                 for(Client next : clientList) {
                     if(next.getName().equals(c.getName())) {
+                        clientList.remove(next);
                         newUser(c);
                         return 0;
                     }
@@ -106,7 +108,7 @@ class PasswordManager {
 
         lock.lock();
         try{
-            for(ArrayList<Client> cList : clients.values()){
+            for(List<Client> cList : clients.values()){
                 for(Client c : cList) clientList.add(c);
             }
 
@@ -117,15 +119,13 @@ class PasswordManager {
     }
     @Override
     public String toString(){
-        String text = new String();
+        StringBuilder text = new StringBuilder();
         for(String password : this.clients.keySet()){
-            text += password + ":";
             for(Client c : this.clients.get(password)){
-                text += c.toString() + "\n\t";
+                text.append(c.toString());
             }
-            text += "\n";
         }
-        return text;
+        return text.toString();
     }
 }
 
@@ -200,9 +200,17 @@ class ServerWorker implements Runnable {
                     case FramedConnection.CHANGEPASSWORD:
                         System.out.println("CGP");
                         if(validUser == null) break;
-                        Client received = getCredentials();
-                        int reply = this.manager.updateUser(received.getPassword(),validUser);
-                        this.c.send((Integer.toString(reply)).getBytes());
+                        int reply = 1;
+                        for(int i = 0; i < 3;i++){
+                            String user = new String(this.c.receive());
+                            String old = new String(this.c.receive());
+                            String nPassword = new String(this.c.receive());
+                            Client temp = new Client(user, nPassword);
+                            reply = this.manager.updateUser(old,temp);
+                            this.c.send((Integer.toString(reply)).getBytes());
+                            if(reply == 0) break;
+                        }
+                        this.server.debug();
                         request = new String(this.c.receive());
                         break;
                     case FramedConnection.NEXTSTEP:
@@ -301,7 +309,7 @@ public class Server {
         Server s = new Server();
 
         // example pre-population
-        s.manager.newUser(new Client("John", "john@mail.com"));
+        s.manager.newUser(new Client("John", "john123"));
         s.manager.newUser(new Client("Alice", "CompanyInc."));
         s.manager.newUser(new Client("Bob", "bob.work@mail.com"));
 
@@ -338,6 +346,10 @@ public class Server {
         System.out.println("MANAGER");
         System.out.println("----------------------");
         System.out.println(this.manager.toString());
+        System.out.println("----------------------");
+        System.out.println("DATASTORE");
+        System.out.println("----------------------");
+        System.out.println(this.dataStore.toString());
         System.out.println("----------------------");
     }
 }
