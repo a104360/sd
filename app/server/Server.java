@@ -160,7 +160,7 @@ class ServerWorker implements Runnable {
     /**
      * Funcao que implementa o comportamento para atender clientes
      */
-    public void run() {
+    public void run(){
         try{
             // Receber o request
             String request = new String(c.receive());
@@ -208,6 +208,7 @@ class ServerWorker implements Runnable {
                     case FramedConnection.NEXTSTEP:
                         System.out.println("RECEBEU O NEXTSTEP");
                         nextStep = true;
+                        this.server.debug();
                         if(validUser == null){
                             this.c.close();
                             return;
@@ -222,10 +223,10 @@ class ServerWorker implements Runnable {
             String welcome = "Please select the next operations.";
             c.send(welcome.getBytes());
 
-            this.server.debug();
-
+            
             while (true) {
                 // Logica para tratar pedidos
+                this.server.debug();
                 try{
                     String text = new String(c.receive());
                     switch (text) {
@@ -250,6 +251,8 @@ class ServerWorker implements Runnable {
             }
             
             c.close();
+        }catch(InterruptedException e){
+            System.err.println(e.getMessage());
         }catch (IOException e){//| InterruptedException e){
             System.err.println("Error handling client: " + e.getMessage());
         } finally {
@@ -259,7 +262,10 @@ class ServerWorker implements Runnable {
                 server.activeSessions--; // Decrementa o contador de sessões ativas
                 System.out.println("Client disconnected. Active sessions: " + server.activeSessions);
                 server.serverCondition.signalAll();  // Notifica outras threads esperando para se conectar
-            } finally {
+                this.server.debug();
+            } catch(IOException | InterruptedException e){
+                System.err.println(e.getMessage());
+            }finally {
                 server.serverLock.unlock();
             }
         }
@@ -322,8 +328,9 @@ public class Server {
         }
     }
 
-    public void debug() throws IOException{
+    public void debug() throws IOException,InterruptedException{
         Process processBuilder = new ProcessBuilder("clear").inheritIO().start();
+        processBuilder.waitFor();
         System.out.println("----------------------");
         System.out.println("Active sessions : ".toUpperCase() + this.activeSessions);
         System.out.println("Max sessions allowed : ".toUpperCase() + this.maxSessions);
