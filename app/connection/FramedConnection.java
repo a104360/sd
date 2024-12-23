@@ -67,7 +67,7 @@ public class FramedConnection implements AutoCloseable{
         this.sock.close();
     }
 
-    public boolean isConnected(){
-        return this.sock.isConnected();
+    public boolean isClosed(){
+        return this.sock.isClosed();
     }
 }

@@ -64,40 +64,9 @@ public class Client {
 
         return new Client(name, password);
     }
-    
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Name : ");
-        builder.append(this.name).append("\n");
-        builder.append("Password : ");
-        builder.append(this.password);
-        builder.append("|\n");
-        return builder.toString();
-    }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        Client other = (Client) obj;
-        return this.hashCode() == other.hashCode();
-        //return Objects.equals(name, other.getName()) && Objects.equals(password, other.getPassword());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, password);
-    }
-
-    public static void main(String[] args) throws IOException {
-        FramedConnection c = new FramedConnection();
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        
+    public static Client authenticate(FramedConnection c,BufferedReader in) throws IOException{
+        Client cli = null;
         boolean auth = false;
         boolean valid = true;
             while (valid) {
@@ -120,6 +89,7 @@ public class Client {
                         c.send(key.getBytes());
                         c.send(value.getBytes());
                         System.out.println(new String(c.receive()));
+                        cli = new Client(key, value);
                         auth = true;
                         break;
 
@@ -134,6 +104,7 @@ public class Client {
                         String replyLogin = new String(c.receive());
                         System.out.println(replyLogin);
                         if(replyLogin.compareTo(FramedConnection.SUCCESS) == 0){
+                            cli = new Client(key, value);
                             auth = true;
                             break;
                         }
@@ -187,6 +158,8 @@ public class Client {
                                 System.out.println("Incorrect password or username. Please try again.");
                             } else if (typeOfReply.equals("0")) {
                                 System.out.println("Login successful!");
+                                cli.name = username;
+                                cli.password = nPassword;
                                 updatePassword = false; // Sai do loop quando o login for bem-sucedido
                             } else {
                                 System.out.println("Unexpected reply from server: " + typeOfReply);
@@ -198,6 +171,7 @@ public class Client {
                             //System.out.print("New password : ");
                             //String nPassword = in.readLine();
                             //c.send(nPassword.getBytes());
+            
                         }
                         break;
 
@@ -207,7 +181,7 @@ public class Client {
                         if(!auth){
                             c.close();
                             in.close();
-                            return;
+                            return null;
                         } 
                         c.send(FramedConnection.NEXTSTEP.getBytes());
                         break;
@@ -216,6 +190,49 @@ public class Client {
                         System.out.println("Invalid choice.");
                 }
             }
+        return cli;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Name : ");
+        builder.append(this.name).append("\n");
+        builder.append("Password : ");
+        builder.append(this.password);
+        builder.append("|\n");
+        return builder.toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Client other = (Client) obj;
+        return this.hashCode() == other.hashCode();
+        //return Objects.equals(name, other.getName()) && Objects.equals(password, other.getPassword());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, password);
+    }
+
+    public static void main(String[] args) throws IOException {
+        FramedConnection c = new FramedConnection();
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        
+        Client cli = Client.authenticate(c, in);
+        if(cli == null) {
+            if(!c.isClosed()) c.close();
+            in.close();
+            return;
+        }
+        
         System.out.println(new String(c.receive()));
         boolean running = true;
             while (running) {

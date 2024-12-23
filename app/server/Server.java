@@ -5,7 +5,9 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Lock;
@@ -178,6 +180,7 @@ class ServerWorker implements Runnable {
                         request = new String(this.c.receive());
                         System.out.println("RECEBEU PROXIMO");
                         break;
+
                     case FramedConnection.LOGIN:
                         System.out.println("LOG");
                         Client aux = getCredentials();
@@ -191,6 +194,7 @@ class ServerWorker implements Runnable {
                         this.c.send(FramedConnection.SUCCESS.getBytes());
                         request = new String(this.c.receive());
                         break;
+
                     case FramedConnection.CHANGEPASSWORD:
                         System.out.println("CGP");
                         if(validUser == null){
@@ -212,6 +216,7 @@ class ServerWorker implements Runnable {
                         this.server.debug();
                         request = new String(this.c.receive());
                         break;
+
                     case FramedConnection.NEXTSTEP:
                         System.out.println("RECEBEU O NEXTSTEP");
                         nextStep = true;
@@ -221,6 +226,7 @@ class ServerWorker implements Runnable {
                             return;
                         }
                         break;
+                        
                     default:
                         this.c.send("Request invalido".getBytes());
                         break;
@@ -247,24 +253,62 @@ class ServerWorker implements Runnable {
                             }
                             this.c.send("null".getBytes());
                             break;
+
                         case FramedConnection.PUT:
                             this.server.debug();
                             System.out.println("RECEIVED " + FramedConnection.PUT);
-                            //key = new String(this.c.receive());
-                            //value = this.c.receive();
+                            key = new String(this.c.receive());
+                            value = this.c.receive();
+                            store.put(key, value);
+                            this.c.send("DATA PUT".getBytes());
+                            this.server.debug();
                             break;
+
                         case FramedConnection.MULTIGET:
                             this.server.debug();
                             System.out.println("RECEIVED " + FramedConnection.MULTIGET);
+
+                            Set<String> keys = new HashSet<>();
+                            //funcao que recebe um byte[] e da um Set<String>
+                            Map<String,byte[]> getPairs = new HashMap<>();
+
+                            for (String getKey : keys) {
+                                value = store.get(getKey);
+                                getPairs.put(getKey, value);
+                            }
+
+                            //função que receba um Map<String,byte[]> e trasforme em um byte[]
                             break;
+
                         case FramedConnection.MULTIPUT:
                             this.server.debug();
                             System.out.println("RECEIVED " + FramedConnection.MULTIPUT);
+
+                            Map<String,byte[]> pairs = new HashMap<>();
+                            //funcao que recebe um byte[] e trasforma em um Map<String,byte[]>
+
+                            for (String putKey : pairs.keySet()) {
+                                value = pairs.get(putKey);
+                                store.put(putKey, value);
+                            }
                             break;
+
                         case FramedConnection.GETWHEN:
-                            this.server.debug();
+                            /*this.server.debug();
                             System.out.println("RECEIVED " + FramedConnection.GETWHEN);
+
+                            String firstKey = new String(this.c.receive());
+                            String secondKey = new String(this.c.receive());
+                            byte[] compareValue = this.c.receive();
+
+                            byte[] resultWhen = store.getWhen(firstKey, secondKey, compareValue);
+                            if(resultWhen != null){
+                                this.c.send(resultWhen);
+                                break;
+                            }
+                            this.c.send("null".getBytes());*/
                             break;
+
                         default:
                             System.out.println("ALGO CORREU MAL");
                             /*this.server.serverLock.lock();
