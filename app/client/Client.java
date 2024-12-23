@@ -99,8 +99,7 @@ public class Client {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         
         boolean auth = false;
-        boolean valid = true;
-            while (valid) {
+            while (auth) {
                 System.out.println("\n--- Autentification Menu ---");
                 System.out.println("1. Register");
                 System.out.println("2. Log in");
@@ -113,35 +112,30 @@ public class Client {
                 switch (passOption) {
                     case 1: // register
                         c.send(FramedConnection.REGISTER.getBytes());
-                        System.out.print("Enter key: ");
-                        String key = in.readLine();
-                        System.out.print("Enter value: ");
-                        String value = in.readLine();
-                        c.send(key.getBytes());
-                        c.send(value.getBytes());
+                        System.out.print("Enter name: ");
+                        String name = in.readLine();
+                        System.out.print("Enter password: ");
+                        String pass = in.readLine();
+                        c.send(name.getBytes());
+                        c.send(pass.getBytes());
                         System.out.println(new String(c.receive()));
                         auth = true;
                         break;
 
                     case 2: // Login 
                         c.send(FramedConnection.LOGIN.getBytes());
-                        System.out.print("Enter key: ");
-                        key = in.readLine();
-                        System.out.print("Enter Value: ");
-                        value = in.readLine();
-                        c.send(key.getBytes());
-                        c.send(value.getBytes());
+                        System.out.print("Enter name: ");
+                        name = in.readLine();
+                        System.out.print("Enter password: ");
+                        pass = in.readLine();
+                        c.send(name.getBytes());
+                        c.send(pass.getBytes());
                         String replyLogin = new String(c.receive());
                         System.out.println(replyLogin);
                         if(replyLogin.compareTo(FramedConnection.SUCCESS) == 0){
                             auth = true;
                             break;
                         }
-                        /*byte[] result = "null".getBytes();
-                        // result = data.get(key);
-                        if (result != null) {
-                            System.out.println("Value: " + new String(result));
-                        }*/
                         break;
                     
                     case 3: // Change Password
@@ -157,7 +151,7 @@ public class Client {
                         while (updatePassword) {
 
                             if(tries > 2){
-                                System.out.print("Do you wich to exit? s/y for yes, any other key for non");
+                                System.out.print("Do you wich to exit? s/y for yes, any other key for no");
                                 String updateChoice = in.readLine();
                                 if(updateChoice.toLowerCase().equals("s") || updateChoice.toLowerCase().equals("y"));
                                 else break;
@@ -193,17 +187,11 @@ public class Client {
                             }
                             tries++;
                         }
-
-                        if(updatePassword == false) {
-                            //System.out.print("New password : ");
-                            //String nPassword = in.readLine();
-                            //c.send(nPassword.getBytes());
-                        }
                         break;
 
                     case 4:
                         System.out.println("Exiting...");
-                        valid = false;
+                        auth = false;
                         if(!auth){
                             c.close();
                             in.close();
@@ -249,106 +237,104 @@ public class Client {
                         c.send(key.getBytes());
                         value = new String(c.receive());
                         System.out.println(value);
-                        /*byte[] result = "null".getBytes();
-                        if (result != null) {
-                            System.out.println("Value: " + new String(result));
-                        }*/
                         break;
                     
                     case 3:
                         c.send(FramedConnection.MULTIPUT.getBytes());
-                        //int multiPutKey = 0; // Variável para armazenar o número inteiro
-                        //boolean validMultiPutInput = false;
+                        int multiPutKey = 0; // Variável para armazenar o número inteiro
+                        boolean validMultiPutInput = false;
 
-                        //while (!validMultiPutInput) {
-                        //    System.out.println("How many values do you want: ");
+                        while (!validMultiPutInput) {
+                            System.out.println("How many values do you want: ");
 
-                        //    try {
-                        //        String line = in.readLine();
-                        //        multiPutKey = Integer.parseInt(line); // Tenta converter para inteiro
-                        //        validMultiPutInput = true; // Se for bem-sucedido, sai do loop
-                        //    } catch (NumberFormatException e) {
-                        //        System.out.println("Invalid input. Please enter a valid number.");
-                        //    } catch (IOException e) {
-                        //        System.out.println("Error reading input: " + e.getMessage());
-                        //    }
-                        //}
-                        //System.out.println("You entered the integer: " + multiGetKey);
+                            try {
+                                String line = in.readLine();
+                                multiPutKey = Integer.parseInt(line); // Tenta converter para inteiro
+                                validMultiPutInput = true; // Se for bem-sucedido, sai do loop
+                           } catch (NumberFormatException e) {
+                                System.out.println("Invalid input. Please enter a valid number.");
+                            } catch (IOException e) {
+                                System.out.println("Error reading input: " + e.getMessage());
+                            }
+                        }
+                        System.out.println("You entered the integer: " + multiPutKey);
 
-                        //Map<String,byte[]> pairs = new HashMap<>();
-                        //for (int i = 0; i < multiPutKey; i++) {
-                        //    System.out.print("Enter key " + i + ": ");
-                        //    String putKey = in.readLine(); // Lê a chave do usuário
-                        //    System.out.print("Enter value for key " + i + ": ");
-                        //    String putValue = in.readLine(); // Lê o valor do usuário
-                        //    pairs.put(putKey, putValue.getBytes());
-                        //}
+                        Map<String,byte[]> pairs = new HashMap<>();
+                        for (int i = 0; i < multiPutKey; i++) {
+                            System.out.print("Enter key " + i + ": ");
+                            String putKey = in.readLine(); // Lê a chave do usuário
+                            System.out.print("Enter value for key " + i + ": ");
+                            String putValue = in.readLine(); // Lê o valor do usuário
+                            pairs.put(putKey, putValue.getBytes());
+                        }
 
-                        //data.multiPut(pairs);
+                        //funcao que trasforma o map em byte array e envia para o server
 
                         break;
 
                     case 4:
                         c.send(FramedConnection.MULTIGET.getBytes());
-                        //int multiGetKey = 0; // Variável para armazenar o número inteiro
-                        //boolean validMultiGetInput = false;
+                        int multiGetKey = 0; // Variável para armazenar o número inteiro
+                        boolean validMultiGetInput = false;
                 
-                        //while (!validMultiGetInput) {
-                        //    System.out.println("How many values do you want: ");
+                        while (!validMultiGetInput) {
+                            System.out.println("How many values do you want: ");
 
-                        //    try {
-                        //        String line = in.readLine();
-                        //        multiGetKey = Integer.parseInt(line); // Tenta converter para inteiro
-                        //        validMultiGetInput = true; // Se for bem-sucedido, sai do loop
-                        //    } catch (NumberFormatException e) {
-                        //        System.out.println("Invalid input. Please enter a number.");
-                        //    } catch (IOException e) {
-                        //        System.out.println("Error reading input: " + e.getMessage());
-                        //    }
-                        //}
-                        //System.out.println("You entered the integer: " + multiGetKey);
+                            try {
+                                String line = in.readLine();
+                                multiGetKey = Integer.parseInt(line); // Tenta converter para inteiro
+                                validMultiGetInput = true; // Se for bem-sucedido, sai do loop
+                            } catch (NumberFormatException e) {
+                                System.out.println("Invalid input. Please enter a number.");
+                            } catch (IOException e) {
+                                System.out.println("Error reading input: " + e.getMessage());
+                            }
+                        }
+                        System.out.println("You entered the integer: " + multiGetKey);
 
-                        //Set<String> keys = new HashSet<>();
-                        //for (int i = 0; i < multiGetKey; i++) {
-                        //    System.out.print("Enter key : ");
-                        //    String getKey = in.readLine(); // Lê a chave do usuário
-                        //    keys.add(getKey);
-                        //}
+                        Set<String> keys = new HashSet<>();
+                        for (int i = 0; i < multiGetKey; i++) {
+                            System.out.print("Enter key : ");
+                            String getKey = in.readLine(); // Lê a chave do usuário
+                            keys.add(getKey);
+                        }
 
-                        //Map<String,byte[]> getPairs = new HashMap<>();
-                        //getPairs = data.multiGet(pairs);
+                        //funcao que trasforma um Set<String> em byte array e envia para o server
 
-                        //for (Map.Entry<String, byte[]> entry : getPairs.entrySet()) {
-                        //    String tempKey = entry.getKey();       // Obtém a chave
-                        //    byte[] tempResult = entry.getValue(); // Obtém o valor (byte[])
-                        //    // Verifica e processa o valor
-                        //    if (tempResult != null) {
-                        //        System.out.println("Key: " + tempKey + ", Value: " + new String(tempResult));
-                        //    } else {
-                        //        System.out.println("Key: " + tempKey + " has no associated value.");
-                        //    }
-                        //}
+                        Map<String,byte[]> getPairs = new HashMap<>();
+                        //função que receba um byte array e trasforme em um Map<String,byte[]>
+
+                        for (Map.Entry<String, byte[]> entry : getPairs.entrySet()) {
+                            String tempKey = entry.getKey();       // Obtém a chave
+                            byte[] tempResult = entry.getValue(); // Obtém o valor (byte[])
+                            // Verifica e processa o valor
+                            if (tempResult != null) {
+                                System.out.println("Key: " + tempKey + ", Value: " + new String(tempResult));
+                            } else {
+                                System.out.println("Key: " + tempKey + " has no associated value.");
+                            }
+                        }
                         break;
 
                     case 5:
                         c.send(FramedConnection.GETWHEN.getBytes());
-                        //System.out.println("A função devolve o valor da primeira chave que meter como input,\n" +
-                        //                   "quando o valor da segunda chave que meter indicar for igual ao valor que meter,\n" +
-                        //                   "so valtando a ser possivel fazer outras operaccões até tal acontecer");
+                        System.out.println("A função devolve o valor da primeira chave que meter como input,\n" +
+                                           "quando o valor da segunda chave que meter indicar for igual ao valor que meter,\n" +
+                                           "so valtando a ser possivel fazer outras operaccões até tal acontecer");
                         
-                        //System.out.print("Enter first key: ");
-                        //String firstKey = in.readLine();
-                        //System.out.print("Enter second key: ");
-                        //String secondKey = in.readLine();
-                        //System.out.print("Enter value to compare: ");
-                        //String compareValue = in.readLine();
+                        System.out.print("Enter first key: ");
+                        String firstKey = in.readLine();
+                        c.send(firstKey.getBytes());
+                        System.out.print("Enter second key: ");
+                        String secondKey = in.readLine();
+                        c.send(secondKey.getBytes());
+                        System.out.print("Enter value to compare: ");
+                        String compareValue = in.readLine();
+                        c.send(compareValue.getBytes());
 
 
-                        //byte[] resultWhen = "null".getBytes();
-                        //// result = getWhen(firstKey, secondKey, compareValue);
-                        //if (resultWhen != null) {
-                        //    System.out.println("Value: " + new String(resultWhen));
-                        //}
+                        String resultWhen = new String(c.receive());
+                        System.out.println(resultWhen);
                         break;
 
                     case 6:
