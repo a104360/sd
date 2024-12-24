@@ -35,14 +35,18 @@ class PasswordManager {
      * @param c - Cliente a inserir
      */
     public void newUser(Client c){
+        // Obter o lock
         lock.lock();
         try{
+            // Se nao existir a password
             if(clients.get(c.getPassword()) == null) {
-                ArrayList<Client> clientList = new ArrayList<>();
+                // Criar uma nova lista de clients
+                List<Client> clientList = new ArrayList<>();
+                // Adicionar o client que queremos inserir no sistema
                 clientList.add(c);
+                // Adicionar a entrada com a password e uma lista com o client respetivo
                 clients.put(c.getPassword(), clientList);
             } else {
-                List<Client> clientList = clients.get(c.getPassword());
                 clients.get(c.getPassword()).add(c);
             }
         } finally {
@@ -149,7 +153,7 @@ class ServerWorker implements Runnable {
         String password = new String(this.c.receive());
         System.out.println(username + " " +password);
         
-        return new Client(username,password);
+        return new Client(username,password,null);
     }
 
     @Override
@@ -208,7 +212,7 @@ class ServerWorker implements Runnable {
                             String user = new String(this.c.receive());
                             String old = new String(this.c.receive());
                             String nPassword = new String(this.c.receive());
-                            Client temp = new Client(user, nPassword);
+                            Client temp = new Client(user, nPassword,null);
                             reply = this.manager.updateUser(old,temp);
                             this.c.send((Integer.toString(reply)).getBytes());
                             if(reply == 0) break;
@@ -399,9 +403,9 @@ public class Server {
         Server s = new Server();
 
         // example pre-population
-        s.manager.newUser(new Client("John", "john123"));
-        s.manager.newUser(new Client("Alice", "CompanyInc."));
-        s.manager.newUser(new Client("Bob", "uminho"));
+        s.manager.newUser(new Client("John", "john123",null));
+        s.manager.newUser(new Client("Alice", "CompanyInc.",null));
+        s.manager.newUser(new Client("Bob", "uminho",null));
 
         s.dataStore.put("t", "lorem ipsum".getBytes());
         s.dataStore.put("teste", "LOREM IPSUM".getBytes());

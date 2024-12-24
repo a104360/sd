@@ -11,15 +11,27 @@ import connection.FramedConnection;
 public class Client {
     private String name;
     private String password;
+    private FramedConnection c;
 
     /**
      * Cria um novo cliente
      * @param name - nome do user
      * @param password - pass do user
      */
-    public Client(String name, String password) {
+    public Client(String name, String password,FramedConnection c) throws IOException {
         this.name = name;
         this.password = password;
+        this.c = null;
+    }
+
+    /**
+     * Construtor de Client apartir de uma Framed Connection
+     * @param c
+     */
+    public Client(FramedConnection c){
+        this.name = null;
+        this.password = null;
+        this.c = c;
     }
 
     /**
@@ -27,7 +39,8 @@ public class Client {
      * @return
      */
     public String getName() { 
-        return name; 
+        if(this.name != null) return name; 
+        return "\0";
     }
 
     /**
@@ -35,7 +48,20 @@ public class Client {
      * @return
      */
     public String getPassword() { 
-        return password; 
+        if(this.password != null)return password; 
+        return "\0";
+    }
+
+    public void setName(String name){
+        this.name = name;
+    }
+
+    public void setPassword(String password){
+        this.password = password;
+    }
+
+    public boolean hasLeft(){
+        return this.name == null || this.password == null ? false : true;
     }
 
     /**
@@ -62,11 +88,11 @@ public class Client {
         String password;
         password = in.readUTF();
 
-        return new Client(name, password);
+        return new Client(name, password,null);
     }
 
-    public static Client authenticate(FramedConnection c,BufferedReader in) throws IOException{
-        Client cli = null;
+    public static Client authenticate(BufferedReader in) throws IOException{
+        Client cli = new Client(new FramedConnection());
         boolean auth = false;
         boolean valid = true;
             while (valid) {
@@ -81,30 +107,34 @@ public class Client {
 
                 switch (passOption) {
                     case 1: // register
-                        c.send(FramedConnection.REGISTER.getBytes());
+                        cli.c.send(FramedConnection.REGISTER.getBytes());
                         System.out.print("Enter key: ");
                         String key = in.readLine();
                         System.out.print("Enter value: ");
                         String value = in.readLine();
-                        c.send(key.getBytes());
-                        c.send(value.getBytes());
-                        System.out.println(new String(c.receive()));
-                        cli = new Client(key, value);
+                        cli.c.send(key.getBytes());
+                        cli.c.send(value.getBytes());
+                        System.out.println(new String(cli.c.receive()));
+                        //cli = new Client(key, value);
+                        cli.setName(key);
+                        cli.setPassword(value);
                         auth = true;
                         break;
 
                     case 2: // Login 
-                        c.send(FramedConnection.LOGIN.getBytes());
+                        cli.c.send(FramedConnection.LOGIN.getBytes());
                         System.out.print("Enter key: ");
                         key = in.readLine();
                         System.out.print("Enter Value: ");
                         value = in.readLine();
-                        c.send(key.getBytes());
-                        c.send(value.getBytes());
-                        String replyLogin = new String(c.receive());
+                        cli.c.send(key.getBytes());
+                        cli.c.send(value.getBytes());
+                        String replyLogin = new String(cli.c.receive());
                         System.out.println(replyLogin);
                         if(replyLogin.compareTo(FramedConnection.SUCCESS) == 0){
-                            cli = new Client(key, value);
+                            //cli = new Client(key, value);
+                            cli.setName(key);
+                            cli.setPassword(value);
                             auth = true;
                             break;
                         }
@@ -116,8 +146,8 @@ public class Client {
                         break;
                     
                     case 3: // Change Password
-                        c.send(FramedConnection.CHANGEPASSWORD.getBytes());
-                        String changeReply = new String(c.receive());
+                        cli.c.send(FramedConnection.CHANGEPASSWORD.getBytes());
+                        String changeReply = new String(cli.c.receive());
                         System.out.println(changeReply);
                         if(changeReply.compareTo("LOGIN NECESSARY") == 0){
                             System.out.println(changeReply);
@@ -143,12 +173,12 @@ public class Client {
                             String nPassword = in.readLine();
                 
                             // Envia os dados para o servidor
-                            c.send(username.getBytes());
-                            c.send(password.getBytes());
-                            c.send(nPassword.getBytes());
+                            cli.c.send(username.getBytes());
+                            cli.c.send(password.getBytes());
+                            cli.c.send(nPassword.getBytes());
                 
                             // Recebe a resposta do servidor
-                            byte[] reply = c.receive();
+                            byte[] reply = cli.c.receive();
                             String typeOfReply = new String(reply);
                 
                             // Verifica o tipo de resposta
@@ -170,7 +200,7 @@ public class Client {
                         if(updatePassword == false) {
                             //System.out.print("New password : ");
                             //String nPassword = in.readLine();
-                            //c.send(nPassword.getBytes());
+                            //cli.c.send(nPassword.getBytes());
             
                         }
                         break;
@@ -179,11 +209,11 @@ public class Client {
                         System.out.println("Exiting...");
                         valid = false;
                         if(!auth){
-                            c.close();
+                            cli.c.close();
                             in.close();
                             return null;
                         } 
-                        c.send(FramedConnection.NEXTSTEP.getBytes());
+                        cli.c.send(FramedConnection.NEXTSTEP.getBytes());
                         break;
 
                     default:
@@ -223,17 +253,22 @@ public class Client {
     }
 
     public static void main(String[] args) throws IOException {
-        FramedConnection c = new FramedConnection();
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        Client cli = Client.authenticate(in);
         
-        Client cli = Client.authenticate(c, in);
-        if(cli == null) {
-            if(!c.isClosed()) c.close();
-            in.close();
+        try{
+            cli.hasLeft();
+        } catch (NullPointerException e){
             return;
         }
+
+        /*if(cli.hasLeft()) {
+            if(!cli.c.isClosed()) cli.c.close();
+            in.close();
+            return;
+        }*/
         
-        System.out.println(new String(c.receive()));
+        System.out.println(new String(cli.c.receive()));
         boolean running = true;
             while (running) {
                 System.out.println("\n--- Main Menu ---");
@@ -249,22 +284,22 @@ public class Client {
 
                 switch (option) {
                     case 1:
-                        c.send(FramedConnection.PUT.getBytes());
+                        cli.c.send(FramedConnection.PUT.getBytes());
                         System.out.print("Enter key: ");
                         String key = in.readLine();
                         System.out.print("Enter value: ");
                         String value = in.readLine();
-                        c.send(key.getBytes());
-                        c.send(value.getBytes());
-                        System.out.println(new String(c.receive()));
+                        cli.c.send(key.getBytes());
+                        cli.c.send(value.getBytes());
+                        System.out.println(new String(cli.c.receive()));
                         break;
 
                     case 2:
-                        c.send(FramedConnection.GET.getBytes());
+                        cli.c.send(FramedConnection.GET.getBytes());
                         System.out.print("Enter key: ");
                         key = in.readLine();
-                        c.send(key.getBytes());
-                        value = new String(c.receive());
+                        cli.c.send(key.getBytes());
+                        value = new String(cli.c.receive());
                         System.out.println(value);
                         /*byte[] result = "null".getBytes();
                         if (result != null) {
@@ -273,7 +308,7 @@ public class Client {
                         break;
                     
                     case 3:
-                        c.send(FramedConnection.MULTIPUT.getBytes());
+                        cli.c.send(FramedConnection.MULTIPUT.getBytes());
                         //int multiPutKey = 0; // Variável para armazenar o número inteiro
                         //boolean validMultiPutInput = false;
 
@@ -306,7 +341,7 @@ public class Client {
                         break;
 
                     case 4:
-                        c.send(FramedConnection.MULTIGET.getBytes());
+                        cli.c.send(FramedConnection.MULTIGET.getBytes());
                         //int multiGetKey = 0; // Variável para armazenar o número inteiro
                         //boolean validMultiGetInput = false;
                 
@@ -348,7 +383,7 @@ public class Client {
                         break;
 
                     case 5:
-                        c.send(FramedConnection.GETWHEN.getBytes());
+                        cli.c.send(FramedConnection.GETWHEN.getBytes());
                         //System.out.println("A função devolve o valor da primeira chave que meter como input,\n" +
                         //                   "quando o valor da segunda chave que meter indicar for igual ao valor que meter,\n" +
                         //                   "so valtando a ser possivel fazer outras operaccões até tal acontecer");
@@ -371,7 +406,7 @@ public class Client {
                     case 6:
                         System.out.println("Exiting...");
                         running = false;
-                        c.close();
+                        cli.c.close();
                         break;
 
                     default:
