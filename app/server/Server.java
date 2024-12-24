@@ -178,7 +178,7 @@ class ServerWorker implements Runnable {
                         System.out.println("REG");
                         Client c = getCredentials();
                         this.manager.newUser(c);
-                        this.c.send("LOGGED IN".getBytes());
+                        this.c.send("Registered".getBytes());
                         validUser = c;
                         this.server.debug();
                         request = new String(this.c.receive());
@@ -206,9 +206,10 @@ class ServerWorker implements Runnable {
                             request = new String(this.c.receive());
                             break;
                         }
-                        this.c.send("CONTINUE".getBytes());
+                        this.c.send("Logged In".getBytes());
                         int reply = 1;
-                        for(int i = 0; i < 3;i++){
+                        String cond = new String(this.c.receive());
+                        while(cond.equals("try")){
                             String user = new String(this.c.receive());
                             String old = new String(this.c.receive());
                             String nPassword = new String(this.c.receive());
@@ -216,6 +217,7 @@ class ServerWorker implements Runnable {
                             reply = this.manager.updateUser(old,temp);
                             this.c.send((Integer.toString(reply)).getBytes());
                             if(reply == 0) break;
+                            cond = new String(this.c.receive());
                         }
                         this.server.debug();
                         request = new String(this.c.receive());
@@ -246,11 +248,22 @@ class ServerWorker implements Runnable {
                 try{
                     String text = new String(c.receive());
                     switch (text) {
+
+                        case FramedConnection.PUT:
+                            this.server.debug();
+                            System.out.println("RECEIVED " + FramedConnection.PUT);
+                            String key = new String(this.c.receive());
+                            byte[] value = this.c.receive();
+                            store.put(key, value);
+                            this.c.send("DATA PUT".getBytes());
+                            this.server.debug();
+                            break;
+
                         case FramedConnection.GET:
                             this.server.debug();
                             System.out.println("RECEIVED " + FramedConnection.GET);
-                            String key = new String(this.c.receive());
-                            byte[] value = this.store.get(key);
+                            key = new String(this.c.receive());
+                            value = this.store.get(key);
                             if(value != null){
                                 this.c.send(value);
                                 break;
@@ -258,47 +271,47 @@ class ServerWorker implements Runnable {
                             this.c.send("null".getBytes());
                             break;
 
-                        case FramedConnection.PUT:
+                        case FramedConnection.MULTIPUT:
                             this.server.debug();
-                            System.out.println("RECEIVED " + FramedConnection.PUT);
-                            key = new String(this.c.receive());
-                            value = this.c.receive();
-                            store.put(key, value);
-                            this.c.send("DATA PUT".getBytes());
+                            System.out.println("RECEIVED " + FramedConnection.MULTIPUT);
+                            String multiPutKey = new String(this.c.receive());
+                            int size = Integer.parseInt(multiPutKey);
+
+                            for(int i = 0; i < size; i++){
+                                key = new String(this.c.receive());
+                                value = this.c.receive();
+                                store.put(key, value);
+                            }
+
+                            this.c.send("DATA MULTIPUT".getBytes());
                             this.server.debug();
                             break;
 
                         case FramedConnection.MULTIGET:
                             this.server.debug();
                             System.out.println("RECEIVED " + FramedConnection.MULTIGET);
+                            String multiGetKey = new String(this.c.receive());
+                            size = Integer.parseInt(multiGetKey);
 
                             Set<String> keys = new HashSet<>();
-                            //funcao que recebe um byte[] e da um Set<String>
-                            Map<String,byte[]> getPairs = new HashMap<>();
-
-                            for (String getKey : keys) {
-                                value = store.get(getKey);
-                                getPairs.put(getKey, value);
+                            for(int i = 0; i < size; i++){
+                                key = new String(this.c.receive());
+                                keys.add(key);
                             }
 
-                            //função que receba um Map<String,byte[]> e trasforme em um byte[]
-                            break;
-
-                        case FramedConnection.MULTIPUT:
-                            this.server.debug();
-                            System.out.println("RECEIVED " + FramedConnection.MULTIPUT);
-
-                            Map<String,byte[]> pairs = new HashMap<>();
-                            //funcao que recebe um byte[] e trasforma em um Map<String,byte[]>
-
-                            for (String putKey : pairs.keySet()) {
-                                value = pairs.get(putKey);
-                                store.put(putKey, value);
+                            for(String temp : keys){
+                                value = this.store.get(temp);
+                                if(value != null){
+                                    this.c.send(value);
+                                    continue;
+                                }
+                                this.c.send("null".getBytes());
                             }
+
                             break;
 
                         case FramedConnection.GETWHEN:
-                            /*this.server.debug();
+                            this.server.debug();
                             System.out.println("RECEIVED " + FramedConnection.GETWHEN);
 
                             String firstKey = new String(this.c.receive());
@@ -310,7 +323,7 @@ class ServerWorker implements Runnable {
                                 this.c.send(resultWhen);
                                 break;
                             }
-                            this.c.send("null".getBytes());*/
+                            this.c.send("null".getBytes());
                             break;
 
                         default:

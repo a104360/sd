@@ -26,6 +26,7 @@ public class Data {
         lock.lock();
         try {
             store.put(key, value);
+            waitWhen.signalAll();//acordar todos as threads em getWhen 
         } finally {
             lock.unlock();
         }
@@ -57,9 +58,9 @@ public class Data {
         lock.lock();
         try {
             while(!valueCond.equals(store.get(keyCond))){
-                waitWhen.await();
+                waitWhen.await(); //acordar sempre que se tiver um put
             }
-            return store.get(key); //fazer signal fora
+            return store.get(key);
         } finally {
             lock.unlock();
         }
