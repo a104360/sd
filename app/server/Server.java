@@ -307,13 +307,20 @@ class ServerWorker implements Runnable {
                                 keys.add(key);
                             }
 
-                            for(String temp : keys){
+                            /*for(String temp : keys){
                                 value = this.store.get(temp);
                                 if(value != null){
                                     this.c.send(value);
                                     continue;
                                 }
                                 this.c.send("null".getBytes());
+                            }*/
+
+                            
+                            List<byte[]> values = this.store.multiGet(keys);
+                            for(byte[] temp : values){
+                                if(temp == null) this.c.send("null".getBytes());
+                                else this.c.send(temp);
                             }
 
                             break;

@@ -1,8 +1,11 @@
 package connection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.*;
+import java.util.Set;
+import java.util.List;
 
 
 public class Data {
@@ -54,6 +57,20 @@ public class Data {
                 this.store.put(value.getKey(), value.getValue());
             }
             waitWhen.signalAll();
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    public List<byte[]> multiGet(Set<String> keys){
+        this.lock.lock();
+        try{
+            List<byte[]> gets = new ArrayList<byte[]>();
+            for (String key : keys) {
+                byte[] value = this.store.get(key);    
+                gets.add(value);
+            }
+            return gets;
         } finally {
             this.lock.unlock();
         }

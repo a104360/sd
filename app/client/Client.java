@@ -356,6 +356,8 @@ public class Client {
                         int multiGetKey = 0; // Variável para armazenar o número inteiro
                         boolean validMultiGetInput = false;
                 
+
+                        // Bloco onde se indica o numero de entradas a obter
                         while (!validMultiGetInput) {
                             System.out.println("How many values do you want: ");
 
@@ -372,13 +374,16 @@ public class Client {
                         System.out.println("You entered the integer: " + multiGetKey);
                         cli.c.send(String.valueOf(multiGetKey).getBytes()); //trasforma a int em string e envia
 
+                        // Obtencao dos pares
                         Map<String,byte[]> getPairs = new HashMap<>();
                         for (int i = 1; i <= multiGetKey; i++) {
                             System.out.print("Enter key " + i + ": ");
                             String getKey = in.readLine(); // Lê a chave do usuário
                             cli.c.send(getKey.getBytes());
+                            getPairs.put(getKey,null);
                         }
 
+                        // Receber os byte array
                         for(String temp : getPairs.keySet()){
                             byte[] valueInByte = cli.c.receive();
                             getPairs.put(temp, valueInByte);
