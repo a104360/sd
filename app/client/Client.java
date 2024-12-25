@@ -249,6 +249,17 @@ public class Client {
         }
     }
 
+    public void multiPut(Map<String,byte[]> pairs){
+        try{
+            for(Map.Entry<String,byte[]> entry : pairs.entrySet()){
+                this.c.send(entry.getKey().getBytes());
+                this.c.send(entry.getValue());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -303,7 +314,7 @@ public class Client {
                 int option = Integer.parseInt(choice);
 
                 switch (option) {
-                    case 1:
+                    case 1: // PUT
                         System.out.print("Enter key: ");
                         String key = in.readLine();
                         System.out.print("Enter value: ");
@@ -311,14 +322,14 @@ public class Client {
                         cli.put(key,value.getBytes());
                         break;
 
-                    case 2:
+                    case 2: // GET 
                         System.out.print("Enter key: ");
                         key = in.readLine();
                         byte[] response = cli.get(key);
                         System.out.println(new String(response));
                         break;
                     
-                    case 3:
+                    case 3: // MULTIPUT
                         cli.c.send(FramedConnection.MULTIPUT.getBytes());
                         int multiPutKey = 0; // Variável para armazenar o número inteiro
                         boolean validMultiPutInput = false;
@@ -338,20 +349,21 @@ public class Client {
                         }
                         System.out.println("You entered the integer: " + multiPutKey);
                         cli.c.send(String.valueOf(multiPutKey).getBytes()); //strasforma a int em string e envia
-
+                        Map <String,byte[]> toSend = new LinkedHashMap<>();
                         for (int i = 1; i <= multiPutKey; i++) {
                             System.out.print("Enter key " + i + ": ");
                             String putKey = in.readLine(); // Lê a chave do usuário
                             System.out.print("Enter value for key " + i + ": ");
                             String putValue = in.readLine(); // Lê o valor do usuário
-                            cli.c.send(putKey.getBytes());
-                            cli.c.send(putValue.getBytes());
+                            toSend.put(putKey,putValue.getBytes());
+                            //cli.c.send(putKey.getBytes());
+                            //cli.c.send(putValue.getBytes());
                         }
-
+                        cli.multiPut(toSend);
                         System.out.println(new String(cli.c.receive()));
                         break;
 
-                    case 4:
+                    case 4: // MULTIGET
                         cli.c.send(FramedConnection.MULTIGET.getBytes());
                         int multiGetKey = 0; // Variável para armazenar o número inteiro
                         boolean validMultiGetInput = false;
@@ -401,7 +413,7 @@ public class Client {
                         }
                         break;
 
-                    case 5:
+                    case 5: // GET WHEN
                         cli.c.send(FramedConnection.GETWHEN.getBytes());
                         System.out.println("A função devolve o valor da primeira chave que meter como input,\n" +
                                            "quando o valor da segunda chave que meter indicar for igual ao valor que meter,\n" +
