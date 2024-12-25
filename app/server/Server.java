@@ -277,11 +277,19 @@ class ServerWorker implements Runnable {
                             String multiPutKey = new String(this.c.receive());
                             int size = Integer.parseInt(multiPutKey);
 
-                            for(int i = 0; i < size; i++){
+                            /*for(int i = 0; i < size; i++){
                                 key = new String(this.c.receive());
                                 value = this.c.receive();
                                 store.put(key, value);
+                            }*/
+                            Map<String,byte[]> entries = new HashMap<>();
+                            for(int i = 0; i < size; i++){
+                                key = new String(this.c.receive());
+                                value = this.c.receive();
+                                entries.put(key, value);
+                                //store.put(key, value);
                             }
+                            store.multiPut(entries);
 
                             this.c.send("DATA MULTIPUT".getBytes());
                             this.server.debug();

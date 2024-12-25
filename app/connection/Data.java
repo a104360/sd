@@ -1,6 +1,7 @@
 package connection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.locks.*;
 
 
@@ -43,6 +44,18 @@ public class Data {
             return store.get(key);
         } finally {
             lock.unlock();
+        }
+    }
+
+    public void multiPut(Map<String,byte[]> entries){
+        this.lock.lock();
+        try{
+            for (Entry<String,byte[]> value : entries.entrySet()) {
+                this.store.put(value.getKey(), value.getValue());
+            }
+            waitWhen.signalAll();
+        } finally {
+            this.lock.unlock();
         }
     }
 
