@@ -197,104 +197,14 @@ public class Client {
 
                 switch (passOption) {
                     case 1: // register
-                        /*cli.c.send(FramedConnection.REGISTER.getBytes());
-                        System.out.print("Enter key: ");
-                        String key = in.readLine();
-                        System.out.print("Enter value: ");
-                        String value = in.readLine();
-                        cli.c.send(key.getBytes());
-                        cli.c.send(value.getBytes());
-                        System.out.println(new String(cli.c.receive()));
-                        //cli = new Client(key, value);
-                        cli.setName(key);
-                        cli.setPassword(value);
-                        auth = true;
-                        */
                         auth = cli.register(in);
                         break;
 
                     case 2: // Login 
-                        /*
-                        
-                        cli.c.send(FramedConnection.LOGIN.getBytes());
-                        System.out.print("Enter key: ");
-                        String key = in.readLine();
-                        System.out.print("Enter Value: ");
-                        String value = in.readLine();
-                        cli.c.send(key.getBytes());
-                        cli.c.send(value.getBytes());
-                        String replyLogin = new String(cli.c.receive());
-                        System.out.println(replyLogin);
-                        if(replyLogin.compareTo(FramedConnection.SUCCESS) == 0){
-                            //cli = new Client(key, value);
-                            cli.setName(key);
-                            cli.setPassword(value);
-                            auth = true;
-                            break;
-                        }
-                        byte[] result = "null".getBytes();
-                        // result = data.get(key);
-                        //if (result != null) {
-                        //    System.out.println("Value: " + new String(result));
-                        //}
-                        */
                         auth = cli.login(in);
                         break;
                     
                     case 3: // Change Password
-                        
-                        /*
-                        cli.c.send(FramedConnection.CHANGEPASSWORD.getBytes());
-                        String changeReply = new String(cli.c.receive());
-                        System.out.println(changeReply);
-                        if(changeReply.compareTo("LOGIN NECESSARY") == 0){
-                            System.out.println(changeReply);
-                            continue;
-                        }
-                        boolean updatePassword = true;
-                        int tries = 0;
-                        while (updatePassword) {
-
-                            if(tries > 2){
-                                System.out.print("Do you wich to exit? s/y for yes, any other key for non");
-                                String updateChoice = in.readLine();
-                                if(updateChoice.toLowerCase().equals("s") || updateChoice.toLowerCase().equals("y"));
-                                else break;
-                            }
-
-                            // Solicita o username e a password
-                            System.out.print("Username: ");
-                            String username = in.readLine();
-                            System.out.print("Password: ");
-                            String password = in.readLine();
-                            System.out.print("New password : ");
-                            String nPassword = in.readLine();
-                
-                            // Envia os dados para o servidor
-                            cli.c.send(username.getBytes());
-                            cli.c.send(password.getBytes());
-                            cli.c.send(nPassword.getBytes());
-                
-                            // Recebe a resposta do servidor
-                            byte[] reply = cli.c.receive();
-                            String typeOfReply = new String(reply);
-                
-                            // Verifica o tipo de resposta
-                            if (typeOfReply.equals("1")) {
-                                System.out.println("Incorrect password. Please try again.");
-                            } else if (typeOfReply.equals("2")) {
-                                System.out.println("Incorrect password or username. Please try again.");
-                            } else if (typeOfReply.equals("0")) {
-                                System.out.println("Login successful!");
-                                cli.name = username;
-                                cli.password = nPassword;
-                                updatePassword = false; // Sai do loop quando o login for bem-sucedido
-                            } else {
-                                System.out.println("Unexpected reply from server: " + typeOfReply);
-                            }
-                            tries++;
-                        }
-                        */
                         cli.changePassword(in);
                         break;
 
@@ -316,6 +226,29 @@ public class Client {
         return cli;
     }
     
+    public void put(String key, byte[] value){
+        try{
+            this.c.send(FramedConnection.PUT.getBytes());
+            this.c.send(key.getBytes());
+            this.c.send(value);
+            System.out.println(new String(this.c.receive()));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+    }
+
+    public byte[] get(String key){
+        try{
+            this.c.send(FramedConnection.GET.getBytes());
+            this.c.send(key.getBytes());
+            return this.c.receive();
+        } catch (IOException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -371,23 +304,18 @@ public class Client {
 
                 switch (option) {
                     case 1:
-                        cli.c.send(FramedConnection.PUT.getBytes());
                         System.out.print("Enter key: ");
                         String key = in.readLine();
                         System.out.print("Enter value: ");
                         String value = in.readLine();
-                        cli.c.send(key.getBytes());
-                        cli.c.send(value.getBytes());
-                        System.out.println(new String(cli.c.receive()));
+                        cli.put(key,value.getBytes());
                         break;
 
                     case 2:
-                        cli.c.send(FramedConnection.GET.getBytes());
                         System.out.print("Enter key: ");
                         key = in.readLine();
-                        cli.c.send(key.getBytes());
-                        value = new String(cli.c.receive());
-                        System.out.println(value);
+                        byte[] response = cli.get(key);
+                        System.out.println(new String(response));
                         break;
                     
                     case 3:
