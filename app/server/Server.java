@@ -5,9 +5,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Lock;
@@ -301,7 +299,7 @@ class ServerWorker implements Runnable {
                             String multiGetKey = new String(this.c.receive());
                             size = Integer.parseInt(multiGetKey);
 
-                            Set<String> keys = new HashSet<>();
+                            List<String> keys = new ArrayList<>();
                             for(int i = 0; i < size; i++){
                                 key = new String(this.c.receive());
                                 keys.add(key);
@@ -317,10 +315,11 @@ class ServerWorker implements Runnable {
                             }*/
 
                             
-                            List<byte[]> values = this.store.multiGet(keys);
-                            for(byte[] temp : values){
-                                if(temp == null) this.c.send("null".getBytes());
-                                else this.c.send(temp);
+                            Map<String,byte[]> values = this.store.multiGet(keys);
+                            for(String k : keys){
+                                value = values.get(k);
+                                if(value != null) c.send(value);
+                                else c.send("null".getBytes());
                             }
 
                             break;
@@ -434,9 +433,12 @@ public class Server {
         s.manager.newUser(new Client("John", "john123",null));
         s.manager.newUser(new Client("Alice", "CompanyInc.",null));
         s.manager.newUser(new Client("Bob", "uminho",null));
+        s.manager.newUser(new Client("j", "j",null));
 
         s.dataStore.put("t", "lorem ipsum".getBytes());
         s.dataStore.put("teste", "LOREM IPSUM".getBytes());
+        s.dataStore.put("b", "bernardo".getBytes());
+        s.dataStore.put("a", "antonio".getBytes());
 
         s.debug();
 

@@ -260,6 +260,24 @@ public class Client {
         }
     }
 
+    public Map<String,byte[]> multiGet(Set<String> keys){
+        try{
+            Map<String,byte[]> mapa = new HashMap<>();
+            for(String s : keys){
+                this.c.send(s.getBytes());
+            }
+            
+            for(String s : keys){
+                mapa.put(s,this.c.receive());
+            }
+            return mapa;
+        } catch (IOException e){
+            e.printStackTrace();
+            return null;
+        }
+    }   
+
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -387,19 +405,21 @@ public class Client {
                         cli.c.send(String.valueOf(multiGetKey).getBytes()); //trasforma a int em string e envia
 
                         // Obtencao dos pares
-                        Map<String,byte[]> getPairs = new HashMap<>();
+                        Set<String> keys = new LinkedHashSet<>();
                         for (int i = 1; i <= multiGetKey; i++) {
                             System.out.print("Enter key " + i + ": ");
                             String getKey = in.readLine(); // Lê a chave do usuário
-                            cli.c.send(getKey.getBytes());
-                            getPairs.put(getKey,null);
+                            //cli.c.send(getKey.getBytes());
+                            keys.add(getKey);
                         }
 
-                        // Receber os byte array
+                        Map<String,byte[]> getPairs = cli.multiGet(keys);
+                        
+                        /*// Receber os byte array
                         for(String temp : getPairs.keySet()){
                             byte[] valueInByte = cli.c.receive();
                             getPairs.put(temp, valueInByte);
-                        }
+                        }*/
 
                         for (Map.Entry<String, byte[]> entry : getPairs.entrySet()) {
                             String tempKey = entry.getKey();       // Obtém a chave
