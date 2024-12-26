@@ -99,7 +99,9 @@ public class Client implements ClientLibrary{
         String password = in.readLine();
         this.c.send(username.getBytes());
         this.c.send(password.getBytes());
-        System.out.println(new String(this.c.receive()));
+        String reply = new String(this.c.receive());
+        System.out.println(reply);
+        if(reply.compareTo("ALREADY EXISTS") == 0)return false;
         this.setName(username);
         this.setPassword(password);
         return true;    
@@ -304,13 +306,14 @@ public class Client implements ClientLibrary{
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
+            System.out.println("apenas comparou o pointer");
             return true;
         }
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
         Client other = (Client) obj;
-        return this.hashCode() == other.hashCode();
+        return this.name.compareTo(other.name) == 0;
         //return Objects.equals(name, other.getName()) && Objects.equals(password, other.getPassword());
     }
 

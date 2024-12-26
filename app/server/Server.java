@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -12,16 +13,16 @@ import java.util.concurrent.locks.Lock;
 import java.lang.ProcessBuilder;
 
 import client.Client;
-import client.ClientList;
 import connection.Data;
 import connection.FramedConnection;
+import java.util.Set;
 
 class PasswordManager {
     /**
      * Estrutura para guardar o nome do Cliente a sua password
      * @apiNote Varios clientes podem ter a mesma password
      */
-    private Map<String, List<Client>> clients = new HashMap<>();
+    private Map<String, Set<String>> clients = new HashMap<>();
     /**
      * Lock para bloquear o PassowordManager
      */
@@ -32,20 +33,26 @@ class PasswordManager {
      * Inserir novos utilizadores no mapa de clientes
      * @param c - Cliente a inserir
      */
-    public void newUser(Client c){
+    public boolean newUser(Client c){
         // Obter o lock
         lock.lock();
         try{
+
+            //if(this.confirmUser(c) == false) return false;
+
             // Se nao existir a password
             if(clients.get(c.getPassword()) == null) {
                 // Criar uma nova lista de clients
-                List<Client> clientList = new ArrayList<>();
+                Set<String> clientList = new HashSet<>();
                 // Adicionar o client que queremos inserir no sistema
-                clientList.add(c);
+                clientList.add(c.getName());
                 // Adicionar a entrada com a password e uma lista com o client respetivo
                 clients.put(c.getPassword(), clientList);
+                return true;
             } else {
-                clients.get(c.getPassword()).add(c);
+                if(clients.get(c.getPassword()).contains(c.getName())) return false;
+                clients.get(c.getPassword()).add(c.getName());
+                return true;
             }
         } finally {
             lock.unlock();
@@ -60,15 +67,14 @@ class PasswordManager {
     public boolean confirmUser(Client c){
         lock.lock();
         try{
-            if(clients.get(c.getPassword()) == null) {
-                return false;
-            } else {
-                List<Client> clientList = clients.get(c.getPassword());
-                for(Client next : clientList) {
-                    if(c.equals(next)) return true;
-                } 
-                return false;
+            for(Set<String> s : clients.values()){
+                if(s.contains(c.getName())) return true;
+                /*for(Client b : s){
+                    if(c.equals(b)) return true;
+                }*/
+
             }
+            return false;
         } finally {
             lock.unlock();
         }
@@ -89,9 +95,9 @@ class PasswordManager {
             if(clients.get(password) == null) {
                 return 1;
             } else {
-                List<Client> clientList = clients.get(password);
-                for(Client next : clientList) {
-                    if(next.getName().equals(c.getName())) {
+                Set<String> clientList = clients.get(password);
+                for(String next : clientList) {
+                    if(next.equals(c.getName())) {
                         clientList.remove(next);
                         newUser(c);
                         return 0;
@@ -104,32 +110,20 @@ class PasswordManager {
         }
     }
 
-    /**
-     * Obter um objeto ClientList do Map de Password
-     */
-    public ClientList getClients() {
-        ClientList clientList = new ClientList();
-
-        lock.lock();
-        try{
-            for(List<Client> cList : clients.values()){
-                for(Client c : cList) clientList.add(c);
-            }
-
-            return clientList;
-        } finally {
-            lock.unlock();
-        }
-    }
     @Override
     public String toString(){
-        StringBuilder text = new StringBuilder();
-        for(String password : this.clients.keySet()){
-            for(Client c : this.clients.get(password)){
-                text.append(c.toString());
+        try{
+            StringBuilder text = new StringBuilder();
+            for(String password : this.clients.keySet()){
+                for(String c : this.clients.get(password)){
+                    text.append(new Client(c,password,null).toString());
+                }
             }
+            return text.toString();
+        } catch (IOException e){
+            e.printStackTrace();
+            return null;
         }
-        return text.toString();
     }
 }
 
@@ -175,8 +169,15 @@ class ServerWorker implements Runnable {
                     case FramedConnection.REGISTER:
                         System.out.println("REG");
                         Client c = getCredentials();
+                        if(this.manager.confirmUser(c)){
+                            this.c.send("ALREADY EXISTS".getBytes());
+                            this.server.debug();
+                            request = new String(this.c.receive());
+                            continue;
+                        }
                         this.manager.newUser(c);
                         this.c.send("Registered".getBytes());
+                        //else this.c.send("ALREADY EXISTS".getBytes());
                         validUser = c;
                         this.server.debug();
                         request = new String(this.c.receive());

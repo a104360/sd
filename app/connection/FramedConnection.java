@@ -60,8 +60,6 @@ public class FramedConnection implements AutoCloseable{
             int size = this.input.readInt();
             byte[] data = new byte[size];
             this.input.readFully(data);
-            //System.err.println("Read the reply");
-            //System.out.println(data);
             return data;
         } finally {
             this.inputLock.unlock();
