@@ -275,11 +275,7 @@ class ServerWorker implements Runnable {
                             String multiPutKey = new String(this.c.receive());
                             int size = Integer.parseInt(multiPutKey);
 
-                            /*for(int i = 0; i < size; i++){
-                                key = new String(this.c.receive());
-                                value = this.c.receive();
-                                store.put(key, value);
-                            }*/
+
                             Map<String,byte[]> entries = new HashMap<>();
                             for(int i = 0; i < size; i++){
                                 key = new String(this.c.receive());
@@ -296,26 +292,21 @@ class ServerWorker implements Runnable {
                         case FramedConnection.MULTIGET:
                             this.server.debug();
                             System.out.println("RECEIVED " + FramedConnection.MULTIGET);
+                            // Receber o numero de entradas
                             String multiGetKey = new String(this.c.receive());
                             size = Integer.parseInt(multiGetKey);
-
+                            
+                            // Receber as keys para procurar
                             List<String> keys = new ArrayList<>();
                             for(int i = 0; i < size; i++){
                                 key = new String(this.c.receive());
                                 keys.add(key);
                             }
 
-                            /*for(String temp : keys){
-                                value = this.store.get(temp);
-                                if(value != null){
-                                    this.c.send(value);
-                                    continue;
-                                }
-                                this.c.send("null".getBytes());
-                            }*/
-
-                            
+                            // Obtenção do mapa de key e value
                             Map<String,byte[]> values = this.store.multiGet(keys);
+
+                            // Envio dos values para o client
                             for(String k : keys){
                                 value = values.get(k);
                                 if(value != null) c.send(value);

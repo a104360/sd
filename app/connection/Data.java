@@ -28,7 +28,7 @@ public class Data {
         lock.lock();
         try {
             store.put(key, value);
-            waitWhen.signalAll();//acordar todos as threads em getWhen 
+            this.waitWhen.signalAll();//acordar todos as threads em getWhen 
         } finally {
             lock.unlock();
         }
@@ -54,7 +54,7 @@ public class Data {
             for (Entry<String,byte[]> value : entries.entrySet()) {
                 this.store.put(value.getKey(), value.getValue());
             }
-            waitWhen.signalAll();
+            this.waitWhen.signalAll();
         } finally {
             this.lock.unlock();
         }
@@ -83,14 +83,16 @@ public class Data {
      * @return - value correspondente a key
      */
     public byte[] getWhen(String key, String keyCond, byte[] valueCond) throws InterruptedException {
-        lock.lock();
-        try {
-            while(!valueCond.equals(store.get(keyCond))){
-                waitWhen.await(); //acordar sempre que se tiver um put
+        this.lock.lock();
+        try{
+            while(new String(this.store.get(keyCond)).compareTo(new String(valueCond)) != 0){
+                //System.out.println("CONDITIONAL KEY : " + new String(this.store.get(keyCond)));
+                //System.out.println("CONDITIONAL VALUE : " + new String(valueCond));
+                this.waitWhen.await();
             }
-            return store.get(key);
+            return this.store.get(key);
         } finally {
-            lock.unlock();
+            this.lock.unlock();
         }
     }
 

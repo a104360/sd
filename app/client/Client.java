@@ -8,7 +8,7 @@ import java.util.*;
 
 import connection.FramedConnection;
 
-public class Client {
+public class Client implements ClientLibrary{
     private String name;
     private String password;
     private FramedConnection c;
@@ -277,6 +277,18 @@ public class Client {
         }
     }   
 
+    public byte[] getWhen(String key,String keyCond,byte[] valueCond){
+        try{
+            this.c.send(key.getBytes());
+            this.c.send(keyCond.getBytes());
+            this.c.send(valueCond);
+
+            return this.c.receive();
+        } catch (IOException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     @Override
     public String toString() {
@@ -439,17 +451,15 @@ public class Client {
                                            "quando o valor da segunda chave que meter indicar for igual ao valor que meter,\n" +
                                            "so valtando a ser possivel fazer outras operaccões até tal acontecer");
                         
-                        System.out.print("Enter first key: ");
+                        System.out.print("Enter key: ");
                         String firstKey = in.readLine();
-                        System.out.print("Enter second key: ");
+                        System.out.print("Enter conditional key: ");
                         String secondKey = in.readLine();
-                        System.out.print("Enter value to compare: ");
+                        System.out.print("Enter conditional value: ");
                         String compareValue = in.readLine();
-                        cli.c.send(firstKey.getBytes());
-                        cli.c.send(secondKey.getBytes());
-                        cli.c.send(compareValue.getBytes());
-
-                        String valueWhen = new String(cli.c.receive());
+                        
+                        String valueWhen = new String(cli.getWhen(firstKey, secondKey, compareValue.getBytes()));
+                        
                         System.out.println(valueWhen);
                         break;
 
