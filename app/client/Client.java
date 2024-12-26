@@ -417,8 +417,7 @@ public class Client implements ClientLibrary{
                             }
                         }
                         System.out.println("You entered the integer: " + multiGetKey);
-                        cli.c.send(String.valueOf(multiGetKey).getBytes()); //trasforma a int em string e envia
-
+                        
                         // Obtencao dos pares
                         Set<String> keys = new LinkedHashSet<>();
                         for (int i = 1; i <= multiGetKey; i++) {
@@ -427,7 +426,9 @@ public class Client implements ClientLibrary{
                             //cli.c.send(getKey.getBytes());
                             keys.add(getKey);
                         }
-
+                        multiGetKey = keys.size();
+                        cli.c.send(String.valueOf(multiGetKey).getBytes()); //trasforma a int em string e envia
+                        
                         Map<String,byte[]> getPairs = cli.multiGet(keys);
                         
                         /*// Receber os byte array
