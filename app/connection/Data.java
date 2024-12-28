@@ -89,8 +89,6 @@ public class Data {
                 this.waitWhen.await();
             }
             while(new String(this.store.get(keyCond)).compareTo(new String(valueCond)) != 0){
-                //System.out.println("CONDITIONAL KEY : " + new String(this.store.get(keyCond)));
-                //System.out.println("CONDITIONAL VALUE : " + new String(valueCond));
                 this.waitWhen.await();
             }
             return this.store.get(key);

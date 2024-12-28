@@ -143,7 +143,6 @@ class ServerWorker implements Runnable {
     private Client getCredentials() throws IOException{
         String username = new String(this.c.receive());
         String password = new String(this.c.receive());
-        System.out.println(username + " " +password);
         
         return new Client(username,password,null);
     }
@@ -162,13 +161,9 @@ class ServerWorker implements Runnable {
             // Iterar este ciclo enquanto 
             //o utilizador for invalido ou nao podermos passar para a rececao de operações 
             while (validUser == null || !nextStep) {
-                //System.out.println("-----------------");
                 this.server.debug();
-                //System.out.println(validUser);
-                //System.out.println(nextStep);
                 switch (request) {
                     case FramedConnection.REGISTER:
-                        System.out.println("REG");
                         Client c = getCredentials();
                         if(this.manager.confirmUser(c)){
                             this.c.send("ALREADY EXISTS".getBytes());
@@ -182,11 +177,9 @@ class ServerWorker implements Runnable {
                         validUser = c;
                         this.server.debug();
                         request = new String(this.c.receive());
-                        System.out.println("RECEBEU PROXIMO");
                         break;
 
                     case FramedConnection.LOGIN:
-                        System.out.println("LOG");
                         Client aux = getCredentials();
                         if(!this.manager.confirmUser(aux)){
                             this.c.send("Credenciais invalidas".getBytes());
@@ -200,7 +193,6 @@ class ServerWorker implements Runnable {
                         break;
 
                     case FramedConnection.CHANGEPASSWORD:
-                        System.out.println("CGP");
                         if(validUser == null){
                             this.c.send("LOGIN NECESSARY".getBytes());
                             request = new String(this.c.receive());
@@ -224,7 +216,6 @@ class ServerWorker implements Runnable {
                         break;
 
                     case FramedConnection.NEXTSTEP:
-                        System.out.println("RECEBEU O NEXTSTEP");
                         nextStep = true;
                         this.server.debug();
                         if(validUser == null){
@@ -238,7 +229,6 @@ class ServerWorker implements Runnable {
                         break;
                 }          
             }
-            System.out.println("SAIU DO CICLO");
             String welcome = "Please select the next operations.";
             c.send(welcome.getBytes());
 
@@ -251,7 +241,6 @@ class ServerWorker implements Runnable {
 
                         case FramedConnection.PUT:
                             this.server.debug();
-                            System.out.println("RECEIVED " + FramedConnection.PUT);
                             String key = new String(this.c.receive());
                             byte[] value = this.c.receive();
                             store.put(key, value);
@@ -261,7 +250,6 @@ class ServerWorker implements Runnable {
 
                         case FramedConnection.GET:
                             this.server.debug();
-                            System.out.println("RECEIVED " + FramedConnection.GET);
                             key = new String(this.c.receive());
                             value = this.store.get(key);
                             if(value != null){
@@ -273,7 +261,6 @@ class ServerWorker implements Runnable {
 
                         case FramedConnection.MULTIPUT:
                             this.server.debug();
-                            System.out.println("RECEIVED " + FramedConnection.MULTIPUT);
                             String multiPutKey = new String(this.c.receive());
                             int size = Integer.parseInt(multiPutKey);
 
@@ -293,7 +280,6 @@ class ServerWorker implements Runnable {
 
                         case FramedConnection.MULTIGET:
                             this.server.debug();
-                            System.out.println("RECEIVED " + FramedConnection.MULTIGET);
                             // Receber o numero de entradas
                             String multiGetKey = new String(this.c.receive());
                             size = Integer.parseInt(multiGetKey);
@@ -319,7 +305,6 @@ class ServerWorker implements Runnable {
 
                         case FramedConnection.GETWHEN:
                             this.server.debug();
-                            System.out.println("RECEIVED " + FramedConnection.GETWHEN);
 
                             String firstKey = new String(this.c.receive());
                             String secondKey = new String(this.c.receive());
@@ -335,58 +320,25 @@ class ServerWorker implements Runnable {
 
                         default:
                             System.out.println("ALGO CORREU MAL");
-                            /*this.server.serverLock.lock();
-                            try{
-                                this.server.activeSessions--;
-                                this.server.serverCondition.signalAll();
-                            } finally {
-                                this.server.serverLock.unlock();
-                            }
-                            this.server.debug();
-                            */
                             return;
                     }
                 } catch (IOException e){
                     System.err.println(e.getMessage());
                     break;
-                    /*this.server.serverLock.lock();
-                    try{
-                        this.server.activeSessions--;
-                        this.server.serverCondition.signalAll();
-                    } finally {
-                        this.server.serverLock.unlock();
-                    }
-                    break;*/
+                    
                 }
-                // Login / Registo
-                // Ciclo para tratar pedidos
             }
             
             c.close();
         }catch(InterruptedException e){
             System.err.println("Interruption of bigger try : " + e.getMessage());
-            /*this.server.serverLock.lock();
-            try{
-                this.server.activeSessions--;
-                this.server.serverCondition.signalAll();
-            } finally {
-                this.server.serverLock.unlock();
-            }*/
-        }catch (IOException e){//| InterruptedException e){
+        }catch (IOException e){
             System.err.println("Error handling client: " + e.getMessage());
-            /*this.server.serverLock.lock();
-            try{
-                this.server.activeSessions--;
-                this.server.serverCondition.signalAll();
-            } finally {
-                this.server.serverLock.unlock();
-            }*/
         } finally {
             // Após o cliente selecionar "exit", decrementa o contador de sessões ativas
             server.serverLock.lock();
             try {
                 server.activeSessions--; // Decrementa o contador de sessões ativas
-                System.out.println("Client disconnected. Active sessions: " + server.activeSessions);
                 server.serverCondition.signalAll();  // Notifica outras threads esperando para se conectar
                 this.server.debug();
             } catch(IOException | InterruptedException e){
@@ -455,19 +407,19 @@ public class Server {
     }
 
     public void debug() throws IOException,InterruptedException{
-        //Process processBuilder = new ProcessBuilder("clear").inheritIO().start();
-        //processBuilder.waitFor();
-        //System.out.println("----------------------");
-        //System.out.println("Active sessions : ".toUpperCase() + this.activeSessions);
-        //System.out.println("Max sessions allowed : ".toUpperCase() + this.maxSessions);
-        //System.out.println("----------------------");
-        //System.out.println("MANAGER");
-        //System.out.println("----------------------");
-        //System.out.println(this.manager.toString());
-        //System.out.println("----------------------");
-        //System.out.println("DATASTORE");
-        //System.out.println("----------------------");
-        //System.out.println(this.dataStore.toString());
-        //System.out.println("----------------------");
+        Process processBuilder = new ProcessBuilder("clear").inheritIO().start();
+        processBuilder.waitFor();
+        System.out.println("----------------------");
+        System.out.println("Active sessions : ".toUpperCase() + this.activeSessions);
+        System.out.println("Max sessions allowed : ".toUpperCase() + this.maxSessions);
+        System.out.println("----------------------");
+        System.out.println("MANAGER");
+        System.out.println("----------------------");
+        System.out.println(this.manager.toString());
+        System.out.println("----------------------");
+        System.out.println("DATASTORE");
+        System.out.println("----------------------");
+        System.out.println(this.dataStore.toString());
+        System.out.println("----------------------");
     }
 }

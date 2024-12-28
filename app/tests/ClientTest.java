@@ -5,9 +5,6 @@ import connection.FramedConnection;
 
 import java.io.IOException;
 //import java.util.List;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 public class ClientTest extends Client{
     
@@ -16,15 +13,7 @@ public class ClientTest extends Client{
     }
 
     public static void main(String[] args){
-        //List<Long> times;
         int size = Integer.parseInt(args[0]);
-        /*List<String> keys = new ArrayList<>(size);
-        List<String> values = new ArrayList<>(size);
-
-        for (int i = 0; i < size; i++) {
-            keys.add("Key" + i);
-            values.add(UUID.randomUUID().toString());
-        }*/
 
         Thread t = new Thread(()->{
             try{
@@ -42,9 +31,10 @@ public class ClientTest extends Client{
             long start = System.nanoTime();
             for(int i = 0;i < size;i++){
                 //cli.put("b", "benfica".getBytes());
-                c.send(FramedConnection.PUT.getBytes());
+                c.send(FramedConnection.GET.getBytes());
                 c.send(Integer.toString(i).getBytes());
-                c.send(Integer.toString(i).getBytes());
+                c.receive();
+                //c.send(Integer.toString(i).getBytes());
                 //System.out.println(i);
                 //System.out.println(new String(c.receive()));
             }
