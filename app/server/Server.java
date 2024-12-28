@@ -154,6 +154,7 @@ class ServerWorker implements Runnable {
      */
     public void run(){
         try{
+            c.send(FramedConnection.SUCCESS.getBytes());
             // Receber o request
             String request = new String(c.receive());
             Client validUser = null; // Indica se o utilizador e valido
@@ -254,7 +255,7 @@ class ServerWorker implements Runnable {
                             String key = new String(this.c.receive());
                             byte[] value = this.c.receive();
                             store.put(key, value);
-                            this.c.send("DATA PUT".getBytes());
+                            //this.c.send("DATA PUT".getBytes());
                             this.server.debug();
                             break;
 
@@ -426,6 +427,7 @@ public class Server {
         s.manager.newUser(new Client("Alice", "CompanyInc.",null));
         s.manager.newUser(new Client("Bob", "uminho",null));
         s.manager.newUser(new Client("j", "j",null));
+        s.manager.newUser(new Client("c", "c",null));
 
         s.dataStore.put("t", "lorem ipsum".getBytes());
         s.dataStore.put("teste", "LOREM IPSUM".getBytes());
@@ -453,19 +455,19 @@ public class Server {
     }
 
     public void debug() throws IOException,InterruptedException{
-        Process processBuilder = new ProcessBuilder("clear").inheritIO().start();
-        processBuilder.waitFor();
-        System.out.println("----------------------");
-        System.out.println("Active sessions : ".toUpperCase() + this.activeSessions);
-        System.out.println("Max sessions allowed : ".toUpperCase() + this.maxSessions);
-        System.out.println("----------------------");
-        System.out.println("MANAGER");
-        System.out.println("----------------------");
-        System.out.println(this.manager.toString());
-        System.out.println("----------------------");
-        System.out.println("DATASTORE");
-        System.out.println("----------------------");
-        System.out.println(this.dataStore.toString());
-        System.out.println("----------------------");
+        //Process processBuilder = new ProcessBuilder("clear").inheritIO().start();
+        //processBuilder.waitFor();
+        //System.out.println("----------------------");
+        //System.out.println("Active sessions : ".toUpperCase() + this.activeSessions);
+        //System.out.println("Max sessions allowed : ".toUpperCase() + this.maxSessions);
+        //System.out.println("----------------------");
+        //System.out.println("MANAGER");
+        //System.out.println("----------------------");
+        //System.out.println(this.manager.toString());
+        //System.out.println("----------------------");
+        //System.out.println("DATASTORE");
+        //System.out.println("----------------------");
+        //System.out.println(this.dataStore.toString());
+        //System.out.println("----------------------");
     }
 }

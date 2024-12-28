@@ -182,8 +182,30 @@ public class Client implements ClientLibrary{
         }
     }
 
+    public static void testeClient() throws IOException{
+        Client c = new Client("j","j",new FramedConnection());
+
+        c.c.send(FramedConnection.LOGIN.getBytes());
+        c.c.send(c.name.getBytes());        
+        c.c.send(c.password.getBytes());        
+        String reply = new String(c.c.receive());
+        c.c.send(FramedConnection.NEXTSTEP.getBytes());
+
+
+
+        //long start = System.nanoTime();
+        //for(int i = 0;i < 1000;i++){
+            c.put("b", "benfica".getBytes());
+        //}
+        //long end = System.nanoTime();
+        //System.out.println("Throught put : " + ((end-start)/1000000000));
+        c.c.close();
+
+    }
+
     public static Client authenticate(BufferedReader in) throws IOException{
         Client cli = new Client(new FramedConnection());
+        cli.c.receive();
         boolean auth = false;
         boolean valid = true;
             while (valid) {
@@ -233,7 +255,7 @@ public class Client implements ClientLibrary{
             this.c.send(FramedConnection.PUT.getBytes());
             this.c.send(key.getBytes());
             this.c.send(value);
-            System.out.println(new String(this.c.receive()));
+            //System.out.println(new String(this.c.receive()));
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -329,6 +351,7 @@ public class Client implements ClientLibrary{
         try{
             cli.hasLeft();
         } catch (NullPointerException e){
+            System.out.println("Desconnectou");
             return;
         }
         
